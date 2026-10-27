@@ -7,14 +7,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MOS Monitor">
-  <meta name="app-version" content="1.1.0">
+  <meta name="app-version" content="1.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.1.1">
+  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.1.1">
   <title>MOS Project Monitor</title>
   <style>
     :root{color-scheme:light;--navy:#101e33;--navy2:#19314f;--teal:#006f75;--mint:#d9f2ee;--ink:#17263b;--muted:#66768a;--line:#e2e9f0;--bg:#f2f5f9;--white:#fff;--amber:#a56606;--red:#b83240;--green:#15724c;--shadow:0 8px 25px rgba(20,40,70,.055)}
     *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.48 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:calc(85px + env(safe-area-inset-bottom))}
     button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}a{color:var(--teal)}
     .top{position:sticky;top:0;z-index:30;background:var(--navy);color:#fff;padding:calc(11px + env(safe-area-inset-top)) 18px 14px;box-shadow:0 3px 18px #07132333}
-    .top-row{max-width:1040px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;gap:11px;align-items:center;min-width:0}.logo{width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:#2b8a89;display:grid;place-items:center;font-size:24px}.brand h1{font-size:17px;letter-spacing:.1px;line-height:1.25;margin:0}.brand small{display:block;color:#c4d6e5;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.version{font-size:11px;padding:5px 9px;border:1px solid #50637c;border-radius:20px;color:#dce9f3;white-space:nowrap}
+    .top-row{max-width:1040px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;gap:11px;align-items:center;min-width:0}.logo{width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:#fff;object-fit:cover;display:block}.brand h1{font-size:17px;letter-spacing:.1px;line-height:1.25;margin:0}.brand small{display:block;color:#c4d6e5;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.version{font-size:11px;padding:5px 9px;border:1px solid #50637c;border-radius:20px;color:#dce9f3;white-space:nowrap}
     main{max-width:1040px;margin:auto;padding:20px 16px 24px}.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:2px 0 18px}.head h2{font-size:24px;line-height:1.2;margin:0 0 5px;font-weight:800;letter-spacing:-.5px}.muted{color:var(--muted)}.small{font-size:12px}.eyebrow{text-transform:uppercase;letter-spacing:1.4px;font-size:10px;font-weight:800;color:var(--teal);margin:0 0 7px}.subtle{color:#d4e3eb;font-size:12px}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.panel,.stat,.project-card,.welcome{background:var(--white);border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow)}.panel{padding:17px;margin-bottom:14px}.panel h3{font-size:17px;margin:0 0 10px}.panel p{margin:8px 0}.stat{padding:15px;min-height:116px}.stat .val{font-size:25px;font-weight:800;letter-spacing:-.5px;line-height:1.25;margin:7px 0 5px}.stat .stat-label{font-size:12px;color:var(--muted);font-weight:600}.stat .foot{font-size:11px;color:var(--muted)}.stat .val.money{font-size:19px}
     .button{border:1px solid transparent;border-radius:11px;min-height:42px;padding:10px 13px;font-weight:750;background:#eaf0f6;color:var(--ink);display:inline-flex;gap:7px;align-items:center;justify-content:center;text-align:center;text-decoration:none}.button.primary{background:var(--teal);color:#fff}.button.dark{background:var(--navy);color:#fff}.button.ghost{border-color:var(--line);background:#fff}.button.danger{color:var(--red);background:#fff1f2}.button.tiny{min-height:34px;padding:6px 9px;font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions .button{flex:0 0 auto}.wide{width:100%}.rounded{border-radius:100px}
@@ -45,7 +47,7 @@
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-row"><div class="brand"><div class="logo" aria-hidden="true">🏗️</div><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Local-first 201 Files</small></div></div><span class="version">v1.1.0</span></div></header>
+  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.1.1" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Local-first 201 Files</small></div></div><span class="version">v1.1.1</span></div></header>
   <main id="app"></main>
   <nav class="nav" id="nav" aria-label="Main navigation"></nav>
   <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" hidden>
@@ -55,7 +57,7 @@
   <script>
   'use strict';
   // All private project data is saved on this device, never in GitHub or a remote database.
-  const VERSION='1.1.0', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
+  const VERSION='1.1.1', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
   const STATUSES=['Needs Review','Planning','Procurement','Awaiting Funding','Construction','On Hold','Completed','Cancelled'];
   const PRIORITIES=['Normal','High','Critical'];
   const app=document.getElementById('app'), nav=document.getElementById('nav');

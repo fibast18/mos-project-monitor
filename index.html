@@ -7,9 +7,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MOS Monitor">
-  <meta name="app-version" content="1.1.1">
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.1.1">
-  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.1.1">
+  <meta name="app-version" content="1.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.2.0">
+  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.2.0">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="Offline-first local project 201 monitoring for Metro Ormoc Slaughterhouse">
   <title>MOS Project Monitor</title>
   <style>
     :root{color-scheme:light;--navy:#101e33;--navy2:#19314f;--teal:#006f75;--mint:#d9f2ee;--ink:#17263b;--muted:#66768a;--line:#e2e9f0;--bg:#f2f5f9;--white:#fff;--amber:#a56606;--red:#b83240;--green:#15724c;--shadow:0 8px 25px rgba(20,40,70,.055)}
@@ -44,10 +47,19 @@
     @media(max-width:390px){.nav button{font-size:9px}.nav button .ico{font-size:20px}.ai-moneyline{grid-template-columns:1fr}.ai-stats .val{font-size:21px}}
     @media(min-width:700px){body{padding-bottom:70px}.top{padding-top:14px}.nav{left:50%;transform:translateX(-50%);bottom:12px;max-width:480px;border:1px solid var(--line);border-radius:18px;padding:6px;box-shadow:0 9px 35px #101e3326}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.grid.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 210px}.modal-wrap{align-items:center;padding:20px}.modal{max-height:90vh;border-radius:22px}}
     @media(max-width:375px){.head h2{font-size:21px}.stat .val{font-size:22px}.brand h1{font-size:15px}.form-grid{grid-template-columns:1fr}}
+
+    /* v1.2.0: Offline-first support, without changing any project or document data. */
+    .offline-strip{max-width:1040px;margin:7px auto 0;font-size:11px;color:#c9e7e9;display:flex;align-items:center;gap:7px;line-height:1.35;min-height:15px}
+    .offline-dot{display:inline-block;width:8px;height:8px;border-radius:100%;background:#e9bd61;flex-shrink:0}
+    .offline-dot.ready{background:#71db9d}.offline-dot.wait{background:#f4c97b}.offline-dot.fail{background:#f0a0a0}
+    .offline-panel{display:flex;align-items:flex-start;gap:12px;padding:13px;border:1px solid #c4e1da;background:#eef9f5;border-radius:12px;margin:12px 0}
+    .offline-panel .offline-dot{margin-top:5px}.offline-panel strong{display:block;margin-bottom:3px}
+    .offline-panel .small{line-height:1.45;color:#486875}
+    @media(max-width:420px){.offline-strip{font-size:10px}.top-row{gap:6px}.version{padding:4px 7px}}
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.1.1" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Local-first 201 Files</small></div></div><span class="version">v1.1.1</span></div></header>
+  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.2.0" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Local-first 201 Files</small></div></div><span class="version">v1.2.0</span></div><div id="offlineBar" class="offline-strip" role="status" aria-live="polite"><span class="offline-dot wait"></span><span id="offlineBarText">Preparing offline availability…</span></div></header>
   <main id="app"></main>
   <nav class="nav" id="nav" aria-label="Main navigation"></nav>
   <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" hidden>
@@ -57,7 +69,7 @@
   <script>
   'use strict';
   // All private project data is saved on this device, never in GitHub or a remote database.
-  const VERSION='1.1.1', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
+  const VERSION='1.2.0', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
   const STATUSES=['Needs Review','Planning','Procurement','Awaiting Funding','Construction','On Hold','Completed','Cancelled'];
   const PRIORITIES=['Normal','High','Critical'];
   const app=document.getElementById('app'), nav=document.getElementById('nav');
@@ -117,7 +129,7 @@
     if(view.detailTab==='files')content=`<div class="notice">Attached files stay in this device's browser storage, not on GitHub. Include them when exporting your JSON backup. An external URL is only a reference, not a stored copy.</div><div class="panel"><div class="flex between"><h3>Project file cabinet</h3><button class="button tiny primary" data-action="attach-file" data-id="${p.id}">+ Attach</button></div><div class="actions"><button class="button tiny ghost" data-action="new-link" data-id="${p.id}">+ Document link</button></div><div id="documentList" class="list" style="margin-top:12px"><p class="helper">Opening local files…</p></div></div>`;
     return `<button class="button tiny ghost" data-action="navigate" data-page="projects" style="margin-bottom:14px">‹ All projects</button><div class="head"><div class="grow"><div class="eyebrow">Project 201 Record</div><h2 class="detail-name">${esc(p.title)}</h2><div class="flex" style="flex-wrap:wrap;gap:7px">${statusChip(p)}<span class="small muted">📍 ${esc(p.location||'Location not set')}</span></div></div></div><div class="actions" style="margin-bottom:12px"><button class="button tiny primary" data-action="new-update" data-id="${p.id}">+ Status update</button><button class="button tiny ghost" data-action="export-dossier" data-id="${p.id}">Export 201</button><button class="button tiny ghost" data-action="ai-project" data-id="${p.id}">AI review</button><button class="button tiny ghost" data-action="edit-project" data-id="${p.id}">Edit profile</button><button class="button tiny danger" data-action="delete-project" data-id="${p.id}">Delete project</button></div><div class="mini-tabs">${[['overview','Overview'],['progress','Quantities'],['journal','Timeline'],['files','Documents']].map(([key,label])=>`<button class="${view.detailTab===key?'active':''}" data-action="detail-tab" data-tab="${key}">${label}</button>`).join('')}</div>${content}${footer()}`;}
   function activityEntry(a){let pct=Number(a.target)>0?percent(Number(a.actual||0)/Number(a.target)*100):0;return `<div class="activity"><div class="activity-top"><div class="grow"><h4>${esc(a.name)}</h4><div class="small muted">Weight: ${num(a.weight)} · ${esc(a.notes||'')}</div></div><div class="numbers">${num(a.actual)} / ${num(a.target)} ${esc(a.unit||'units')}</div></div>${progressMarkup(pct)}<div class="flex between"><div class="small muted">${pct}% item completion</div><div class="actions"><button class="button tiny ghost" data-action="edit-activity" data-id="${a.id}">Edit quantity</button><button class="button tiny danger" data-action="delete-activity" data-id="${a.id}">×</button></div></div></div>`;}
-  function backupPage(){return `${heading('Local data & backup','Manage imports, exports and iPhone storage')}<div class="notice warn"><b>Local-only means device-specific.</b> GitHub stores the app code, not your saved project data. Safari and an Add-to-Home-Screen app may use separate storage. Clearing website data, changing devices, or reinstalling the web app may delete your records. Export a backup after significant edits.</div><div class="panel"><h3>Import your monitoring CSV</h3><p class="helper">Supports your existing <b>Project Monitoring.csv</b> layout: project titles across columns, project information in rows, and monthly updates with continuation lines. Existing records are merged by project title.</p><label class="check"><input type="checkbox" id="replaceImported"><span>Replace matching monthly entries previously imported from CSV (does not replace manually added updates)</span></label><button class="button primary wide" data-action="choose-csv">Import CSV file</button></div><div class="panel"><h3>Complete JSON backup</h3><p class="helper">Export all project profiles, work quantities, updates, and the actual contents of locally attached documents. Save in Files, iCloud Drive, or another location you control.</p><button class="button dark wide" data-action="export-backup">Export full backup (.json)</button><div class="separator"></div><p class="helper">Restoring replaces this device's current records. Make a backup before restoring.</p><button class="button ghost wide" data-action="choose-restore">Restore JSON backup</button></div><div class="panel"><h3>Other export options</h3><div class="actions"><button class="button ghost" data-action="export-summary">Export project summary CSV</button><button class="button ghost" data-action="new-project">+ New project</button></div></div><div class="panel"><h3>Built-in AI Center</h3><p class="helper">AI Analyst and AI Advisor run on this device with transparent rules. They require no API key, cloud model, subscription, or internet connection once the app has loaded. AI only reads project records and suggests follow-ups; it never modifies data.</p><button class="button ghost wide" data-action="navigate" data-page="ai">Open AI Center</button></div><div class="panel"><h3>Storage and privacy</h3><div class="small" id="storageInfo">Checking local storage…</div><div class="separator"></div><p class="helper">Your project records are saved with browser localStorage; attached files use IndexedDB. The app contains no analytics, tracking SDKs, user accounts, or automatic uploads.</p><p class="helper">The single HTML file needs internet access to load from GitHub Pages unless the browser happens to cache it. It does not promise offline loading.</p><button class="button danger" data-action="erase-all">Delete all local project data</button></div>${footer()}`;}
+  function backupPage(){return `${heading('Local data & backup','Manage imports, exports and iPhone storage')}<div class="notice warn"><b>Local-only means device-specific.</b> GitHub stores the app code, not your saved project data. Safari and an Add-to-Home-Screen app may use separate storage. Clearing website data, changing devices, or reinstalling the web app may delete your records. Export a backup after significant edits.</div><div class="panel"><h3>Import your monitoring CSV</h3><p class="helper">Supports your existing <b>Project Monitoring.csv</b> layout: project titles across columns, project information in rows, and monthly updates with continuation lines. Existing records are merged by project title.</p><label class="check"><input type="checkbox" id="replaceImported"><span>Replace matching monthly entries previously imported from CSV (does not replace manually added updates)</span></label><button class="button primary wide" data-action="choose-csv">Import CSV file</button></div><div class="panel"><h3>Complete JSON backup</h3><p class="helper">Export all project profiles, work quantities, updates, and the actual contents of locally attached documents. Save in Files, iCloud Drive, or another location you control.</p><button class="button dark wide" data-action="export-backup">Export full backup (.json)</button><div class="separator"></div><p class="helper">Restoring replaces this device's current records. Make a backup before restoring.</p><button class="button ghost wide" data-action="choose-restore">Restore JSON backup</button></div><div class="panel"><h3>Other export options</h3><div class="actions"><button class="button ghost" data-action="export-summary">Export project summary CSV</button><button class="button ghost" data-action="new-project">+ New project</button></div></div><div class="panel"><h3>Built-in AI Center</h3><p class="helper">AI Analyst and AI Advisor run on this device with transparent rules. They require no API key, cloud model, subscription, or internet connection once the app has loaded. AI only reads project records and suggests follow-ups; it never modifies data.</p><button class="button ghost wide" data-action="navigate" data-page="ai">Open AI Center</button></div><div class="panel"><h3>Offline app availability</h3><p class="helper">The app installs its offline files automatically when opened from GitHub Pages while online. Wait for the green <b>Offline ready</b> indicator, then open the Home Screen app once while online and check that it also shows Offline ready. You can then launch and work in Airplane Mode. A completely new GitHub URL cannot load offline before the app has been downloaded.</p><div id="offlineDetails" class="offline-panel"><span class="offline-dot wait"></span><div><strong>Checking offline copy…</strong><div class="small">The offline app shell consists of the complete HTML, service worker, manifest and MOS icons.</div></div></div><div class="actions"><button class="button ghost" data-action="check-app-updates">Check app updates</button><button class="button ghost" data-action="verify-offline">Verify offline setup</button></div></div><div class="panel"><h3>Storage and privacy</h3><div class="small" id="storageInfo">Checking local storage…</div><div class="separator"></div><p class="helper">Your project records are saved with browser localStorage; attached files use IndexedDB. The app contains no analytics, tracking SDKs, user accounts, or automatic uploads.</p><p class="helper">After offline setup is complete, the app interface, all locally stored project records, built-in AI analysis, and saved document attachments work without internet. Links to external websites or documents still require connectivity. Browser/iOS storage cleanup can remove cached files or project data, so keep a JSON backup.</p><button class="button danger" data-action="erase-all">Delete all local project data</button></div>${footer()}`;}
 
   function modalOpen(html){modalClose();document.getElementById('modalMount').innerHTML=`<div class="modal-wrap" role="presentation"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;document.body.style.overflow='hidden';setTimeout(()=>document.querySelector('.modal [autofocus]')?.focus(),0);}
   function modalClose(){if(modalUrl){URL.revokeObjectURL(modalUrl);modalUrl=null}document.getElementById('modalMount').innerHTML='';document.body.style.overflow='';}
@@ -288,8 +300,78 @@
   }
 
 
+
+  // Offline-first PWA (v1.2.0): precached app shell; project data stays in the original
+  // localStorage and IndexedDB. Never cache, upload or transmit private records.
+  const OFFLINE_INDEX=new URL('./index.html',document.baseURI).href;
+  let offlineReady=false, swReg=null, hadServiceWorkerController=false, swReloadStarted=false;
+  function offlineMessage(){
+    const online=navigator.onLine;
+    if(offlineReady)return online?'Offline ready · App saved on this iPhone':'Offline mode · App works without internet';
+    if(!('serviceWorker' in navigator))return 'Offline setup unavailable in this browser';
+    return online?'Preparing offline app files…':'Offline copy not verified · Connect once to finish setup';
+  }
+  function drawOfflineStatus(){
+    const bar=document.getElementById('offlineBar');
+    if(bar){const dot=bar.querySelector('.offline-dot'),msg=document.getElementById('offlineBarText');
+      if(dot)dot.className='offline-dot '+(offlineReady?'ready':navigator.onLine?'wait':'fail');
+      if(msg)msg.textContent=offlineMessage();
+    }
+    const detail=document.getElementById('offlineDetails');
+    if(detail){
+      const dotClass=offlineReady?'ready':navigator.onLine?'wait':'fail';
+      const title=offlineReady?'Offline ready on this device':navigator.onLine?'Setting up offline files…':'Offline copy not confirmed';
+      const description=offlineReady?(navigator.onLine?'You can switch off mobile data/Wi-Fi and use the app.':'You are using the cached app. All local project data and built-in analysis remain accessible.'):(navigator.onLine?'Remain online until the service worker finishes saving the required app files.':'Reconnect once to complete offline installation.');
+      detail.innerHTML=`<span class="offline-dot ${dotClass}"></span><div><strong>${title}</strong><div class="small">${description}</div></div>`;
+    }
+  }
+  async function verifyOfflineFiles(){
+    try{
+      if(!('caches' in window))return false;
+      const cache=await caches.match(OFFLINE_INDEX);
+      if(!cache)return false;
+      // The HTML and required icon are cached by the same atomic install operation.
+      const icon=await caches.match(new URL('./apple-touch-icon.png',document.baseURI).href);
+      return !!icon;
+    }catch(e){return false;}
+  }
+  async function refreshOfflineStatus(){offlineReady=await verifyOfflineFiles();drawOfflineStatus();return offlineReady;}
+  async function initOfflineSupport(){
+    drawOfflineStatus();
+    window.addEventListener('online',async()=>{drawOfflineStatus();await refreshOfflineStatus();if(swReg){try{await swReg.update()}catch(e){}}});
+    window.addEventListener('offline',drawOfflineStatus);
+    if(!('serviceWorker' in navigator)||!['https:','http:'].includes(location.protocol)){drawOfflineStatus();return;}
+    hadServiceWorkerController=!!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange',async()=>{
+      await refreshOfflineStatus();
+      if(hadServiceWorkerController&&!swReloadStarted){swReloadStarted=true;location.reload();}
+      hadServiceWorkerController=true;
+    });
+    try{
+      swReg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+      if(swReg.installing)swReg.installing.addEventListener('statechange',refreshOfflineStatus);
+      if(swReg.waiting)await refreshOfflineStatus();
+      await navigator.serviceWorker.ready;
+      await refreshOfflineStatus();
+      // Do not block the app if an unsupported browser cannot retain cached files.
+    }catch(err){console.warn('Offline setup not available:',err);await refreshOfflineStatus();}
+  }
+  async function checkAppUpdates(){
+    if(!navigator.onLine){alert('You are offline. The installed version still works; connect to the internet to check for a new release.');return;}
+    if(!('serviceWorker' in navigator)){alert('Service workers are not supported here. Open the app using Safari on HTTPS GitHub Pages.');return;}
+    try{
+      const registration=swReg||await navigator.serviceWorker.getRegistration('./');
+      if(!registration){alert('Offline setup has not completed. Please reopen this app online.');return;}
+      const oldWorker=registration.active;
+      await registration.update();
+      await refreshOfflineStatus();
+      if(registration.installing||registration.waiting||registration.active!==oldWorker){alert('An update was found. The app will reload automatically when the new version is ready.');}
+      else alert('Update check finished. If a new GitHub version is published, reopening the app online will install it.');
+    }catch(err){alert('Could not check updates. Check your connection and try again. '+err.message);}
+  }
+
   document.addEventListener('click',async ev=>{let el=ev.target.closest('[data-action]');if(!el)return;let a=el.dataset.action, pid=el.dataset.id;try{
-    if(a==='navigate')go(el.dataset.page);else if(a==='ai-tab'){view.aiTab=el.dataset.tab;render();}else if(a==='ai-project'){view.aiScope=pid;view.aiTab='analyst';go('ai');}else if(a==='ai-fix'){if(el.dataset.kind==='edit')projectModal(pid);else if(el.dataset.kind==='log')updateModal(null,pid);else if(el.dataset.kind==='quantities'){view.detailTab='progress';go('detail',pid);}else{view.detailTab='overview';go('detail',pid);}}else if(a==='export-ai-report')aiExportReport();else if(a==='detail'){view.detailTab='overview';go('detail',pid);}else if(a==='detail-tab'){view.detailTab=el.dataset.tab;render();}
+    if(a==='check-app-updates')await checkAppUpdates();else if(a==='verify-offline'){await refreshOfflineStatus();alert(offlineReady?'Offline files are saved on this device. Test once with Airplane Mode on.':'Offline files are not yet confirmed. Open this app online and keep it open until it shows Offline ready.');}else if(a==='navigate')go(el.dataset.page);else if(a==='ai-tab'){view.aiTab=el.dataset.tab;render();}else if(a==='ai-project'){view.aiScope=pid;view.aiTab='analyst';go('ai');}else if(a==='ai-fix'){if(el.dataset.kind==='edit')projectModal(pid);else if(el.dataset.kind==='log')updateModal(null,pid);else if(el.dataset.kind==='quantities'){view.detailTab='progress';go('detail',pid);}else{view.detailTab='overview';go('detail',pid);}}else if(a==='export-ai-report')aiExportReport();else if(a==='detail'){view.detailTab='overview';go('detail',pid);}else if(a==='detail-tab'){view.detailTab=el.dataset.tab;render();}
     else if(a==='new-project')projectModal();else if(a==='edit-project')projectModal(pid);else if(a==='delete-project'){let p=project(pid);if(p&&confirm(`Delete ${p.title} and its project file, all updates, quantities, and attachments from this iPhone? Export a backup first.`)){let docs=await docsFor(pid);for(let d of docs)await delDoc(d.id);data.projects=data.projects.filter(x=>x.id!==pid);data.updates=data.updates.filter(x=>x.projectId!==pid);data.activities=data.activities.filter(x=>x.projectId!==pid);save();go('projects');}}
     else if(a==='new-update')updateModal(null,pid);else if(a==='edit-update')updateModal(pid);
     else if(a==='delete-update'){if(confirm('Delete this journal entry?')){data.updates=data.updates.filter(u=>u.id!==pid);save();render();}}
@@ -315,6 +397,7 @@
   document.getElementById('documentInput').addEventListener('change',async ev=>{await documentPicked([...ev.target.files]);ev.target.value='';});
   document.getElementById('modalMount').addEventListener('click',ev=>{if(ev.target.classList.contains('modal-wrap'))modalClose();});
   render();
+  initOfflineSupport();
   </script>
 </body>
 </html>

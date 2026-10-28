@@ -1,0 +1,31 @@
+MOS Project Monitor v1.2.0 — Offline-First GitHub Pages Release
+
+FILES TO UPLOAD (same folder in your existing GitHub repository):
+  index.html
+  sw.js
+  manifest.webmanifest
+  apple-touch-icon.png
+  icon-192.png
+  icon-512.png
+
+UPDATE STEPS
+1. Before uploading, open the current MOS Project Monitor and export the COMPLETE JSON backup.
+2. Keep the SAME repository and GitHub Pages URL. Replace the existing index.html
+   and add the five companion files above; commit all six together.
+3. While online, open your GitHub Pages app in Safari and wait until the top banner says "Offline ready".
+4. Add to iPhone Home Screen. IMPORTANT: open the newly installed Home Screen app online at least once
+   and confirm "Offline ready" inside that app. On iOS, Home Screen storage can differ from Safari.
+5. Switch on Airplane Mode and open the Home Screen app to test offline operation.
+6. Keep exporting complete JSON backups to Files/iCloud Drive. Cache/storage can be cleared by iOS.
+
+IMPORTANT LIMITATION
+No website, including GitHub Pages, can load at a brand-new URL with no internet BEFORE
+it has been downloaded or otherwise installed onto that device. This release ensures
+subsequent launches are offline after first successful online installation and precache.
+
+DATA COMPATIBILITY
+Unchanged localStorage key: mos-project-monitor-v1
+Unchanged IndexedDB database: mos-project-documents-v1
+Unchanged data schema version: 1
+CSV import, JSON backup/restore, quantitative progress, AI Analyst, AI Advisor, and MOS logo preserved.
+External web-document links are not offline; local attached files are.

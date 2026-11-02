@@ -1,4 +1,4 @@
-MOS Project Monitor v1.2.0 — Offline-First GitHub Pages Release
+MOS Project Monitor v1.2.1 — Offline-First GitHub Pages Release
 
 FILES TO UPLOAD (same folder in your existing GitHub repository):
   index.html
@@ -29,3 +29,8 @@ Unchanged IndexedDB database: mos-project-documents-v1
 Unchanged data schema version: 1
 CSV import, JSON backup/restore, quantitative progress, AI Analyst, AI Advisor, and MOS logo preserved.
 External web-document links are not offline; local attached files are.
+
+WHAT CHANGED IN v1.2.1
+The text "Developed by: Engr. Rico J. Pono" is now displayed on every screen immediately
+above the "MOS Project Monitor v1.2.1 · Stored on this device" footer line.
+No existing project features, import/export formats, or local data keys were changed.

@@ -1,6 +1,6 @@
-/* MOS Project Monitor v1.2.0 — offline-first app shell. No private project data is fetched or uploaded. */
+/* MOS Project Monitor v1.2.1 — offline-first app shell. No private project data is fetched or uploaded. */
 'use strict';
-const VERSION='1.2.0';
+const VERSION='1.2.1';
 const CACHE_PREFIX='mos-project-monitor-app-';
 const CACHE_NAME=CACHE_PREFIX+VERSION;
 const ROOT=self.registration.scope;

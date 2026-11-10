@@ -7,12 +7,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MOS Monitor">
-  <meta name="app-version" content="1.2.1">
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.2.1">
-  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.2.1">
+  <meta name="app-version" content="1.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.3.0">
+  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.3.0">
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="description" content="Offline-first local project 201 monitoring for Metro Ormoc Slaughterhouse">
+  <meta name="description" content="Private shared Project 201 progress monitoring with Cloudflare login and offline cache">
   <title>MOS Project Monitor</title>
   <style>
     :root{color-scheme:light;--navy:#101e33;--navy2:#19314f;--teal:#006f75;--mint:#d9f2ee;--ink:#17263b;--muted:#66768a;--line:#e2e9f0;--bg:#f2f5f9;--white:#fff;--amber:#a56606;--red:#b83240;--green:#15724c;--shadow:0 8px 25px rgba(20,40,70,.055)}
@@ -48,7 +48,7 @@
     @media(min-width:700px){body{padding-bottom:70px}.top{padding-top:14px}.nav{left:50%;transform:translateX(-50%);bottom:12px;max-width:480px;border:1px solid var(--line);border-radius:18px;padding:6px;box-shadow:0 9px 35px #101e3326}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.grid.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 210px}.modal-wrap{align-items:center;padding:20px}.modal{max-height:90vh;border-radius:22px}}
     @media(max-width:375px){.head h2{font-size:21px}.stat .val{font-size:22px}.brand h1{font-size:15px}.form-grid{grid-template-columns:1fr}}
 
-    /* v1.2.1: Offline-first support, without changing any project or document data. */
+    /* v1.3.0: Offline-first support, without changing any project or document data. */
     .offline-strip{max-width:1040px;margin:7px auto 0;font-size:11px;color:#c9e7e9;display:flex;align-items:center;gap:7px;line-height:1.35;min-height:15px}
     .offline-dot{display:inline-block;width:8px;height:8px;border-radius:100%;background:#e9bd61;flex-shrink:0}
     .offline-dot.ready{background:#71db9d}.offline-dot.wait{background:#f4c97b}.offline-dot.fail{background:#f0a0a0}
@@ -56,10 +56,20 @@
     .offline-panel .offline-dot{margin-top:5px}.offline-panel strong{display:block;margin-bottom:3px}
     .offline-panel .small{line-height:1.45;color:#486875}
     @media(max-width:420px){.offline-strip{font-size:10px}.top-row{gap:6px}.version{padding:4px 7px}}
+
+    /* v1.3.0 secure cloud access */
+    .cloud-banner{padding:12px 14px;margin-bottom:15px;border:1px solid #bfdfda;background:#eef8f5;border-radius:14px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+    .cloud-banner strong{font-size:12px;display:block;color:#156050}.cloud-banner .small{font-size:11px;color:#457367;overflow-wrap:anywhere}
+    .cloud-banner.pending{background:#fff8e5;border-color:#e9d4a4}.cloud-banner.pending strong{color:#87600b}
+    .cloud-banner.conflict{background:#fff1f1;border-color:#efc5c7}.cloud-banner.conflict strong{color:#9d2630}
+    .cloud-detail{background:#f4f8fa;border-radius:12px;padding:12px;margin:12px 0;border:1px solid var(--line)}
+    .cloud-detail p{margin-bottom:0}.cloud-user{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:11px 0}
+    .cloud-user:last-child{border-bottom:none}
+    @media(max-width:425px){.cloud-banner .button{padding:7px 10px;font-size:11px;min-height:35px}.cloud-user .actions{width:100%}}
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.2.1" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Local-first 201 Files</small></div></div><span class="version">v1.2.1</span></div><div id="offlineBar" class="offline-strip" role="status" aria-live="polite"><span class="offline-dot wait"></span><span id="offlineBarText">Preparing offline availability…</span></div></header>
+  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.3.0" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Secure Cloud 201 Files</small></div></div><span class="version">v1.3.0</span></div><div id="offlineBar" class="offline-strip" role="status" aria-live="polite"><span class="offline-dot wait"></span><span id="offlineBarText">Preparing offline availability…</span></div></header>
   <main id="app"></main>
   <nav class="nav" id="nav" aria-label="Main navigation"></nav>
   <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" hidden>
@@ -68,17 +78,255 @@
   <div id="modalMount"></div>
   <script>
   'use strict';
-  // All private project data is saved on this device, never in GitHub or a remote database.
-  const VERSION='1.2.1', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
+  // Authorized project text is shared using Cloudflare Worker + D1. Legacy v1.2.1 local records stay preserved for migration.
+  const VERSION='1.3.0', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
   const STATUSES=['Needs Review','Planning','Procurement','Awaiting Funding','Construction','On Hold','Completed','Cancelled'];
   const PRIORITIES=['Normal','High','Critical'];
   const app=document.getElementById('app'), nav=document.getElementById('nav');
   const view={page:'dashboard',pid:null,detailTab:'overview',query:'',statusFilter:'All',updatesFilter:'All',aiTab:'analyst',aiScope:'All',aiSeverity:'All',aiCategory:'All'};
   let data=loadData(); let dbPromise=null; let modalUrl=null;
+  // v1.3.0 Cloudflare D1 shared project monitoring.
+  // Original v1.2.1 local database is preserved solely for deliberate migration.
+  const CLOUD_AUTH_KEY='mos-project-monitor-cloud-auth-v1';
+  const CLOUD_API_KEY='mos-project-monitor-cloud-api-v1';
+  // PUBLIC API address only (not a secret). Replace once before uploading to GitHub Pages.
+  const PUBLIC_WORKER_URL='https://mos-project-monitor-api.ormocslaughter.workers.dev';
+  const DEFAULT_WORKER_URL=PUBLIC_WORKER_URL.includes('REPLACE-')?'':PUBLIC_WORKER_URL;
+  const CLOUD_CACHE_PREFIX='mos-project-monitor-cloud-cache-v1:';
+  const legacyData=JSON.parse(JSON.stringify(data));
+  const cloud={apiUrl:localStorage.getItem(CLOUD_API_KEY)||DEFAULT_WORKER_URL,token:'',expiresAt:0,user:null,revision:0,dirty:false,conflict:false,working:false,error:'',users:null,loading:true};
+  let cloudSyncTimer=null, cloudPollTimer=null;
+  const EDIT_ACTIONS=new Set(['new-project','edit-project','delete-project','new-update','edit-update','delete-update','new-activity','edit-activity','delete-activity','choose-csv','choose-restore','attach-file','new-link','delete-doc','erase-all','ai-fix']);
+  function canEdit(){return Boolean(cloud.user&&!cloud.user.mustChangePassword&&['admin','editor'].includes(cloud.user.role));}
+  function cloudCacheKey(){return CLOUD_CACHE_PREFIX+(cloud.user?.id||'none')+'@'+cloud.apiUrl;}
+  function validApiUrl(input){
+    const url=new URL(String(input||'').trim());
+    if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash||url.pathname!=='/')throw Error('Enter your HTTPS Worker base URL, for example https://mos-project-monitor-api.example.workers.dev');
+    return url.origin;
+  }
+  function saveCloudAuth(){
+    if(!cloud.token||!cloud.user){localStorage.removeItem(CLOUD_AUTH_KEY);return;}
+    localStorage.setItem(CLOUD_AUTH_KEY,JSON.stringify({apiUrl:cloud.apiUrl,token:cloud.token,expiresAt:cloud.expiresAt,user:cloud.user}));
+  }
+  function saveCloudCache(){
+    if(!cloud.user)return;
+    try{localStorage.setItem(cloudCacheKey(),JSON.stringify({data,revision:cloud.revision,dirty:cloud.dirty,conflict:cloud.conflict,savedAt:new Date().toISOString()}));}
+    catch(err){alert('Could not preserve the local offline draft. Export a JSON backup immediately. '+err.message);throw err;}
+  }
+  function readCloudCache(){
+    if(!cloud.user)return false;
+    try{let c=JSON.parse(localStorage.getItem(cloudCacheKey())||'null');
+      if(!c||!c.data||!Array.isArray(c.data.projects)||!Array.isArray(c.data.updates)||!Array.isArray(c.data.activities))return false;
+      data=c.data;cloud.revision=Number(c.revision)||0;cloud.dirty=Boolean(c.dirty);cloud.conflict=Boolean(c.conflict);return true;
+    }catch(err){console.warn('Cloud offline cache unavailable',err);return false;}
+  }
+  async function cloudRequest(endpoint,method='GET',body=null,requiresAuth=true){
+    if(!cloud.apiUrl)throw Error('Cloudflare Worker URL is not configured.');
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),14000);
+    try{
+      const headers={Accept:'application/json'};
+      if(body!==null)headers['Content-Type']='application/json';
+      if(requiresAuth){if(!cloud.token)throw Error('Login required.');headers.Authorization='Bearer '+cloud.token;}
+      const response=await fetch(cloud.apiUrl+endpoint,{method,headers,body:body===null?undefined:JSON.stringify(body),cache:'no-store',credentials:'omit',mode:'cors',signal:controller.signal});
+      let result;try{result=await response.json();}catch{throw Error('Cloud API did not return JSON. Check the Worker address and deployment.');}
+      if(!response.ok){let err=new Error(result.error||'Cloud request failed ('+response.status+').');err.status=response.status;throw err;}
+      return result;
+    }catch(err){if(err.name==='AbortError')throw Error('Cloud connection timed out. Your offline records remain saved.');throw err;}
+    finally{clearTimeout(timer);}
+  }
+  function cloudError(err){cloud.error=String(err?.message||err||'Unknown connection problem');}
+  function cloudBanner(){
+    const label=cloud.conflict?'Sync conflict · action required':cloud.dirty?'Changes on this device · not yet in cloud':navigator.onLine?'Cloud connected · latest records':'Offline cloud copy';
+    return `<div class="cloud-banner ${cloud.conflict?'conflict':cloud.dirty?'pending':''}"><div class="grow"><strong>☁ ${esc(label)}</strong><div class="small">${esc(cloud.user?.name||'')} · ${esc(cloud.user?.role||'')} · Revision ${cloud.revision}${cloud.error?' · '+esc(cloud.error):''}</div></div><button class="button tiny ghost" data-action="cloud-sync">${cloud.conflict?'Resolve':cloud.dirty?'Sync now':'Refresh'}</button></div>`;
+  }
+  function gateLoginPage(){
+    nav.style.display='none';
+    return `${heading('Authorized access','Cloudflare login required for shared Project 201 records')}
+    <div class="notice warn"><b>Private records are protected by your Cloudflare login.</b> The public GitHub page contains application code only. Your existing offline records remain preserved for migration by an administrator.</div>
+    <form class="panel" data-form="cloud-login"><h3>Sign in to MOS Project Monitor</h3>
+    ${cloud.apiUrl?`<input name="apiUrl" type="hidden" value="${esc(cloud.apiUrl)}"><div class="small muted" style="margin-bottom:12px">Secure Cloudflare API: ${esc(cloud.apiUrl)}</div>`:field('apiUrl','Cloudflare Worker HTTPS address',cloud.apiUrl,'url','placeholder="https://mos-project-monitor-api.example.workers.dev" required')}
+    ${field('email','Authorized email address','','email','autocomplete="username" required')}
+    ${field('password','Password','','password','autocomplete="current-password" required')}
+    <button class="button primary wide" type="submit">Sign in</button></form>
+    <div class="panel"><h3>First-time administrator setup</h3><p class="helper">Only perform this once, after deploying the Worker and setting its secret key. Use the account <b>ormocslaughter@gmail.com</b>.</p>
+    <button class="button ghost wide" data-action="cloud-setup-open">Initialize administrator</button></div>
+    ${footer()}`;
+  }
+  function passwordGatePage(){
+    nav.style.display='none';
+    return `${heading('Set your own password','Temporary password must be changed before viewing any project records')}
+      <div class="notice warn">Signed in as ${esc(cloud.user?.email)}. Your administrator-assigned password is temporary.</div>
+      ${changePasswordForm()}<div class="panel"><button class="button ghost" data-action="cloud-logout">Sign out</button></div>${footer()}`;
+  }
+  function changePasswordForm(){return `<form class="panel" data-form="cloud-change-password"><h3>Change account password</h3>
+    ${field('oldPassword','Current / temporary password','','password','autocomplete="current-password" required')}
+    ${field('newPassword','New password (at least 12 characters)','','password','autocomplete="new-password" minlength="12" required')}
+    ${field('confirmPassword','Confirm new password','','password','autocomplete="new-password" minlength="12" required')}
+    <button class="button primary wide" type="submit">Update password</button></form>`;}
+  function cloudAccountPanel(){return `<div class="panel"><div class="flex between" style="align-items:flex-start"><div class="grow"><h3>Cloudflare account</h3>
+    <p class="small"><b>${esc(cloud.user?.name)}</b> · ${esc(cloud.user?.role)}</p><p class="small muted">${esc(cloud.user?.email)}<br>${esc(cloud.apiUrl)}</p></div>
+    <button class="button tiny ghost" data-action="cloud-logout">Sign out</button></div>
+    <div class="progress-note">Shared project profiles, reports and quantities are stored in Cloudflare D1. GitHub serves the app. Attached file contents and local document links are saved on this device only.</div>
+    <div class="cloud-detail"><strong>${cloud.conflict?'⚠ Revision conflict':cloud.dirty?'Unsynced local changes':'Revision '+cloud.revision}</strong>
+    <p class="small">${cloud.conflict?'Another editor published changes. Your draft is preserved on this iPhone. Export its backup before choosing to discard and reload.':cloud.dirty?'The draft will sync automatically when the internet is available.':'Use Refresh to check edits from other signed-in users.'}</p></div>
+    ${cloud.error?`<div class="notice warn">${esc(cloud.error)}</div>`:''}
+    <div class="actions"><button class="button primary" data-action="cloud-sync">${cloud.conflict?'Resolve conflict':'Sync / refresh now'}</button>${cloud.dirty?'<button class="button ghost" data-action="cloud-discard">Discard local draft and load cloud</button>':''}<button class="button ghost" data-action="cloud-password-open">Change password</button></div>
+    <p class="helper">An offline copy is accessible on a previously signed-in device until its login session expires; disabling a user cannot erase a copy from a device that remains offline.</p></div>`;}
+  function cloudAdminPanel(){
+    if(cloud.user?.role!=='admin')return '';
+    const oldCount=legacyData.projects.length;
+    const noCloudData=cloud.revision===0&&data.projects.length===0&&data.updates.length===0&&data.activities.length===0&&!cloud.dirty;
+    return `<div class="panel"><h3>First-time migration</h3><p class="helper">Original v1.2.1 data detected on this same device: <b>${oldCount} project(s)</b> and <b>${legacyData.updates.length} reports</b>. Your original local data will remain unchanged.</p>
+      ${oldCount&&noCloudData?'<button class="button primary wide" data-action="cloud-import-old">Import original iPhone records into empty cloud</button>':`<p class="helper">${oldCount?'The one-time import is available only while the cloud is empty.':'No original local project records found on this installation.'}</p>`}
+      <p class="helper">If the old records were created on another device, use the CSV import or a JSON backup. Document attachment file contents do not move to D1.</p></div>
+      <div class="panel"><div class="flex between"><h3>Users and permissions</h3><button class="button tiny primary" data-action="cloud-user-new">+ Add user</button></div>
+      <p class="helper">Only administrators create accounts. Roles are enforced by Cloudflare, not just by hidden buttons. Newly created accounts must change their temporary passwords.</p>
+      <div id="cloudUsersList" class="list"><p class="helper">Loading authorized users…</p></div></div>`;
+  }
+  async function refreshCloudUsers(){
+    if(cloud.user?.role!=='admin'||view.page!=='backup')return;
+    const host=document.getElementById('cloudUsersList');if(!host)return;
+    try{const result=await cloudRequest('/api/users');cloud.users=result.users;let elem=document.getElementById('cloudUsersList');
+      if(!elem)return;
+      elem.innerHTML=result.users.map(u=>`<div class="cloud-user"><div class="grow"><b>${esc(u.name)}</b> <span class="chip">${esc(u.role)}</span>
+      ${!u.active?'<span class="chip">Disabled</span>':''}${u.mustChangePassword?'<span class="chip">Password change required</span>':''}
+      <div class="small muted">${esc(u.email)}</div></div><div class="actions"><button class="button tiny ghost" data-action="cloud-user-edit" data-id="${esc(u.id)}">Manage</button>
+      <button class="button tiny ghost" data-action="cloud-user-reset" data-id="${esc(u.id)}">Reset password</button></div></div>`).join('')||'<p>No authorized users.</p>';
+    }catch(err){let elem=document.getElementById('cloudUsersList');if(elem)elem.textContent='Could not load authorized users: '+err.message;}
+  }
+  function cloudUserModal(uid){
+    const u=cloud.users?.find(x=>x.id===uid);
+    if(uid&&!u)return;
+    const edit=Boolean(u);
+    modalOpen(modalFrame(edit?'Manage authorized user':'Add authorized user',edit?'cloud-user-edit':'cloud-user-create',
+      `<input name="id" type="hidden" value="${esc(uid||'')}">${field('name','Name',u?.name||'','text','required')}
+      ${edit?`<p class="small muted">${esc(u.email)}</p>`:field('email','Email','','email','autocomplete="off" required')}
+      ${selectField('role','Access role',['viewer','editor','admin'],u?.role||'viewer')}
+      ${edit?`<div class="field"><label><input name="active" type="checkbox" ${u.active?'checked':''}> Account active</label></div>`:
+        field('password','Temporary password (12+ characters)','','password','minlength="12" autocomplete="new-password" required')}
+      <p class="helper">${edit?'Changing access or status signs the user out of active sessions.':'Share the temporary password privately. The app does not send email invitations.'}</p>`));
+  }
+  function cloudResetModal(uid){const u=cloud.users?.find(x=>x.id===uid);if(!u)return;
+    modalOpen(modalFrame('Reset password: '+u.email,'cloud-user-reset',
+      `<input name="id" type="hidden" value="${esc(uid)}">${field('password','New temporary password (12+ characters)','','password','minlength="12" required')}
+      <p class="helper">The user will be logged out and required to change this password after signing back in.</p>`,'Reset password'));
+  }
+  function cloudSetupModal(){
+    modalOpen(modalFrame('Initialize first administrator','cloud-setup',
+      `<p class="helper">Complete Cloudflare D1 migration and set SETUP_KEY secret before continuing.</p>
+      ${field('apiUrl','Worker HTTPS URL',cloud.apiUrl,'url','required')}
+      ${field('email','Administrator email','ormocslaughter@gmail.com','email','required')}
+      ${field('setupKey','One-time Cloudflare SETUP_KEY','','password','required')}
+      ${field('name','Administrator name','MOS Administrator','text','required')}
+      ${field('password','Choose admin password (12+ characters)','','password','minlength="12" required')}`,'Initialize'));
+  }
+  async function refreshCloudData(quiet=false){
+    if(!cloud.user||!navigator.onLine||cloud.conflict||cloud.dirty)return;
+    try{const r=await cloudRequest('/api/data');
+      if(cloud.dirty)return;
+      data=r.data;cloud.revision=r.revision;cloud.error='';saveCloudCache();
+      if(!document.querySelector('.modal-wrap'))render();
+    }catch(err){cloudError(err);if(!quiet)render();}
+  }
+  async function syncCloud(){
+    if(!cloud.user||cloud.working||!navigator.onLine)return;
+    if(cloud.conflict){view.page='backup';render();return;}
+    if(!cloud.dirty){await refreshCloudData();return;}
+    cloud.working=true;
+    const sent=JSON.stringify(data), expected=cloud.revision;
+    try{const result=await cloudRequest('/api/data','PUT',{expectedRevision:expected,data:JSON.parse(sent)});
+      cloud.revision=result.revision;
+      cloud.dirty=JSON.stringify(data)!==sent;
+      cloud.error='';saveCloudCache();
+      if(!cloud.dirty)await refreshCloudData(true);
+      else setTimeout(syncCloud,250);
+    }catch(err){cloudError(err);if(err.status===409){cloud.conflict=true;saveCloudCache();}if(err.status===401)await cloudLogout(true);}
+    finally{cloud.working=false;render();}
+  }
+  function scheduleCloudSync(){clearTimeout(cloudSyncTimer);if(navigator.onLine&&cloud.dirty&&!cloud.conflict)cloudSyncTimer=setTimeout(syncCloud,600);}
+  async function cloudLogout(expired=false){
+    if(cloud.dirty&&!expired&&!confirm('Unsynced project changes are on this device only. Sign out anyway? Export a JSON backup first.'))return;
+    const token=cloud.token;
+    if(!expired&&token&&navigator.onLine)try{await cloudRequest('/api/auth/logout','POST',{});}catch{}
+    if(cloud.user&&!cloud.dirty)localStorage.removeItem(cloudCacheKey());
+    cloud.token='';cloud.user=null;cloud.expiresAt=0;cloud.conflict=false;cloud.dirty=false;cloud.revision=0;cloud.users=null;cloud.error=expired?'Your login has expired or access was removed. Sign in again.':'';
+    localStorage.removeItem(CLOUD_AUTH_KEY);data=blankData();view.page='dashboard';modalClose();render();
+  }
+  async function initCloudSession(){
+    let saved=null;try{saved=JSON.parse(localStorage.getItem(CLOUD_AUTH_KEY)||'null');}catch{}
+    if(saved&&saved.token&&saved.user&&saved.expiresAt*1000>Date.now()){
+      try{cloud.apiUrl=validApiUrl(saved.apiUrl);cloud.token=saved.token;cloud.user=saved.user;cloud.expiresAt=saved.expiresAt;readCloudCache();}catch{}
+    }
+    cloud.loading=false;render();
+    if(cloud.user&&navigator.onLine){
+      try{const r=await cloudRequest('/api/auth/me');cloud.user=r.user;cloud.expiresAt=r.expiresAt;saveCloudAuth();
+        if(!cloud.user.mustChangePassword){if(cloud.dirty)scheduleCloudSync();else await refreshCloudData(true);}
+        render();
+      }catch(err){if(err.status===401)await cloudLogout(true);else{cloudError(err);render();}}
+    }
+    window.addEventListener('online',async()=>{
+      if(cloud.user){try{const r=await cloudRequest('/api/auth/me');cloud.user=r.user;saveCloudAuth();if(cloud.dirty)await syncCloud();else await refreshCloudData(true);}catch(err){if(err.status===401)await cloudLogout(true);else cloudError(err);}render();}
+    });
+    cloudPollTimer=setInterval(async()=>{if(cloud.user&&Date.now()>=cloud.expiresAt*1000){await cloudLogout(true);return;}if(cloud.user&&!cloud.user.mustChangePassword&&navigator.onLine&&!document.querySelector('.modal-wrap')){
+      try{const r=await cloudRequest('/api/auth/me');cloud.user=r.user;saveCloudAuth();if(cloud.dirty)await syncCloud();else await refreshCloudData(true);}catch(err){if(err.status===401)await cloudLogout(true);else cloudError(err);}
+    }},60000);
+  }
+  async function cloudClick(a,pid){
+    if(a==='cloud-setup-open'){cloudSetupModal();return;}
+    if(a==='cloud-logout'){await cloudLogout();return;}
+    if(a==='cloud-password-open'){modalOpen(changePasswordForm());return;}
+    if(a==='cloud-sync'){await syncCloud();return;}
+    if(a==='cloud-discard'){
+      if(!navigator.onLine)throw Error('Reconnect before discarding the local draft.');
+      if(!confirm('Discard every UNSYNCED local change and reload the latest cloud data? Export a JSON backup before continuing.'))return;
+      const fresh=await cloudRequest('/api/data');data=fresh.data;cloud.revision=fresh.revision;cloud.dirty=false;cloud.conflict=false;cloud.error='';saveCloudCache();render();return;
+    }
+    if(a==='cloud-import-old'){
+      if(cloud.user?.role!=='admin'||cloud.dirty||cloud.revision!==0||data.projects.length)throw Error('Import is allowed only once, into an empty cloud database.');
+      if(!confirm(`Upload ${legacyData.projects.length} original iPhone projects and ${legacyData.updates.length} reports into the shared cloud database? Local copies will remain unchanged. Documents do not sync.`))return;
+      const result=await cloudRequest('/api/data/seed','POST',{expectedRevision:0,data:legacyData});
+      cloud.revision=result.revision;data=JSON.parse(JSON.stringify(legacyData));cloud.dirty=false;saveCloudCache();render();alert('Initial cloud migration complete. Authorized viewers can now see these records.');return;
+    }
+    if(a==='cloud-user-new'){cloudUserModal();return;}
+    if(a==='cloud-user-edit'){cloudUserModal(pid);return;}
+    if(a==='cloud-user-reset'){cloudResetModal(pid);return;}
+  }
+  async function cloudSubmit(form,x){
+    const t=form.dataset.form;
+    if(t==='cloud-login'){
+      cloud.apiUrl=validApiUrl(x.apiUrl);localStorage.setItem(CLOUD_API_KEY,cloud.apiUrl);
+      const result=await cloudRequest('/api/auth/login','POST',{email:x.email,password:x.password},false);
+      cloud.token=result.token;cloud.user=result.user;cloud.expiresAt=result.expiresAt;cloud.revision=0;cloud.dirty=false;cloud.conflict=false;cloud.error='';data=blankData();
+      saveCloudAuth();readCloudCache();
+      if(!cloud.user.mustChangePassword){if(navigator.onLine&&cloud.dirty)scheduleCloudSync();else await refreshCloudData(true);}
+      view.page='dashboard';render();return;
+    }
+    if(t==='cloud-setup'){
+      cloud.apiUrl=validApiUrl(x.apiUrl);localStorage.setItem(CLOUD_API_KEY,cloud.apiUrl);
+      await cloudRequest('/api/setup','POST',{email:x.email,name:x.name,password:x.password,setupKey:x.setupKey},false);
+      modalClose();alert('Administrator initialized. Sign in with your new password.');render();return;
+    }
+    if(t==='cloud-change-password'){
+      if(x.newPassword!==x.confirmPassword)throw Error('New passwords do not match.');
+      const result=await cloudRequest('/api/auth/password','POST',{oldPassword:x.oldPassword,newPassword:x.newPassword});
+      cloud.user=result.user;saveCloudAuth();modalClose();render();if(!cloud.user.mustChangePassword)await refreshCloudData();alert('Password updated.');return;
+    }
+    if(cloud.user?.role!=='admin')throw Error('Administrator access required.');
+    if(t==='cloud-user-create'){
+      await cloudRequest('/api/users','POST',{name:x.name,email:x.email,role:x.role,password:x.password});
+    }else if(t==='cloud-user-edit'){
+      await cloudRequest('/api/users/'+encodeURIComponent(x.id),'PATCH',{name:x.name,role:x.role,active:x.active==='on'});
+    }else if(t==='cloud-user-reset'){
+      await cloudRequest('/api/users/'+encodeURIComponent(x.id)+'/reset-password','POST',{password:x.password});
+    }
+    modalClose();await refreshCloudUsers();alert('Authorized account updated.');
+  }
+
+  data=blankData();
 
   function blankData(){return {schemaVersion:1,projects:[],updates:[],activities:[],savedAt:new Date().toISOString()};}
   function loadData(){try{let raw=localStorage.getItem(DATA_KEY);let obj=raw?JSON.parse(raw):blankData();if(!Array.isArray(obj.projects)||!Array.isArray(obj.updates)||!Array.isArray(obj.activities))throw Error('Invalid saved data');return obj;}catch(err){alert('Unable to load saved data: '+err.message+'\nPlease restore a backup if needed.');return blankData();}}
-  function save(){data.savedAt=new Date().toISOString();try{localStorage.setItem(DATA_KEY,JSON.stringify(data));}catch(err){alert('The iPhone could not save your changes. Export a backup and free device storage. '+err.message);throw err;}}
+  function save(){if(!canEdit())throw Error('You have read-only permission.');data.savedAt=new Date().toISOString();cloud.dirty=true;cloud.error='';saveCloudCache();scheduleCloudSync();}
   function id(){return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(36).slice(2);}
   function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function money(n){let x=Number(n);return Number.isFinite(x)?new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP',maximumFractionDigits:2}).format(x):'—';}
@@ -100,14 +348,27 @@
   function progressMarkup(v){return `<div class="bar"><div class="fill" style="width:${v===null?0:percent(v)}%"></div></div>`;}
   function statusChip(p){return `<span class="chip ${esc(stageClass(p.status))}">${esc(p.status||'Needs Review')}${p.statusSuggested?' · suggested':''}</span>`;}
   function heading(title,subtitle,action=''){return `<div class="head"><div><h2>${esc(title)}</h2><div class="muted small">${esc(subtitle)}</div></div>${action}</div>`;}
-  function footer(){return `<div class="footer"><div class="developer-credit">Developed by: Engr. Rico J. Pono</div>MOS Project Monitor v${VERSION} · Stored on this device<br>City Government of Ormoc · Project 201 Records</div>`;}
+  function footer(){return `<div class="footer"><div class="developer-credit">Developed by: Engr. Rico J. Pono</div>MOS Project Monitor v${VERSION} · Secure Cloudflare D1 sync<br>City Government of Ormoc · Project 201 Records</div>`;}
   function renderNav(){nav.innerHTML=[['dashboard','◫','Dashboard'],['projects','▤','Projects'],['updates','◷','Updates'],['ai','✦','AI Center'],['backup','⇩','Backup']].map(([page,ico,label])=>`<button data-action="navigate" data-page="${page}" class="${view.page===page||(view.page==='detail'&&page==='projects')?'active':''}" aria-label="${label}"><span class="ico">${ico}</span>${label}</button>`).join('');}
-  function render(){renderNav();if(view.page==='dashboard')app.innerHTML=dashboard();else if(view.page==='projects')app.innerHTML=projectsPage();else if(view.page==='updates')app.innerHTML=updatesPage();else if(view.page==='backup')app.innerHTML=backupPage();else if(view.page==='ai')app.innerHTML=aiCenterPage();else app.innerHTML=detailPage();if(view.page==='detail'&&view.detailTab==='files')refreshDocs();if(view.page==='backup')storageInfo();}
+  function render(){
+    if(cloud.loading){nav.style.display='none';app.innerHTML='<div class="panel"><h3>Loading secure project monitoring…</h3></div>';return;}
+    if(!cloud.user){app.innerHTML=gateLoginPage();return;}
+    if(cloud.user.mustChangePassword){app.innerHTML=passwordGatePage();return;}
+    nav.style.display='grid';renderNav();
+    if(view.page==='dashboard')app.innerHTML=dashboard();else if(view.page==='projects')app.innerHTML=projectsPage();else if(view.page==='updates')app.innerHTML=updatesPage();else if(view.page==='backup')app.innerHTML=backupPage();else if(view.page==='ai')app.innerHTML=aiCenterPage();else app.innerHTML=detailPage();
+    app.insertAdjacentHTML('afterbegin',cloudBanner());
+    if(!canEdit())for(const el of app.querySelectorAll('[data-action]'))if(EDIT_ACTIONS.has(el.dataset.action))el.remove();
+    if(view.page==='detail'&&view.detailTab==='files'){
+      if(cloud.user.role==='viewer'){const host=app.querySelector('#documentList');if(host)host.innerHTML='<div class="notice">Only locally attached files are available on their originating device. They are not shared through Cloudflare D1.</div>';}
+      else refreshDocs();
+    }
+    if(view.page==='backup'){if(cloud.user.role!=='viewer')storageInfo();if(cloud.user.role==='admin')refreshCloudUsers();}
+  }
   function go(page,pid){view.page=page;if(pid)view.pid=pid;window.scrollTo(0,0);render();}
 
   function dashboard(){let total=data.projects.length;let assessed=data.projects.map(p=>physical(p.id)).filter(v=>v!==null);let avg=assessed.length?assessed.reduce((s,x)=>s+x,0)/assessed.length:null;let budget=data.projects.reduce((s,p)=>s+(Number(p.approvedBudget)||0),0);let attention=data.projects.filter(p=>['Awaiting Funding','On Hold'].includes(p.status)||overdue(p)>0).length;let flagged=data.projects.filter(p=>['Awaiting Funding','On Hold'].includes(p.status)||overdue(p)>0).slice(0,5);let recent=[...data.updates].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
-    return `${!total?`<section class="welcome"><div class="eyebrow" style="color:#a9eeea">Welcome</div><h2>Your project records, in one place.</h2><p>Import your existing monitoring CSV privately on this iPhone, or create a project. The GitHub website itself stores none of your private records.</p><div class="actions"><button class="button" data-action="choose-csv">Import Project Monitoring.csv</button><button class="button" data-action="new-project">+ New project</button></div></section>`:''}
-    ${heading('Project overview','Live figures based on records saved on this iPhone',`<button class="button tiny primary" data-action="new-update">+ Update</button>`)}
+    return `${!total?`<section class="welcome"><div class="eyebrow" style="color:#a9eeea">Welcome</div><h2>Your project records, in one place.</h2><p>Import the CSV into the protected Cloudflare project database, or create a project. Only authorized signed-in users can view shared progress.</p><div class="actions"><button class="button" data-action="choose-csv">Import Project Monitoring.csv</button><button class="button" data-action="new-project">+ New project</button></div></section>`:''}
+    ${heading('Project overview','Shared project records from Cloudflare D1, cached for offline access',`<button class="button tiny primary" data-action="new-update">+ Update</button>`)}
     <div class="grid"><div class="stat"><div class="stat-label">Total projects</div><div class="val">${total}</div><div class="foot">Registered project files</div></div><div class="stat"><div class="stat-label">Physical progress</div><div class="val">${avg===null?'—':percent(avg)+'%'}</div><div class="foot">${assessed.length}/${total} measured · average</div></div><div class="stat"><div class="stat-label">Approved budgets</div><div class="val money">${moneyShort(budget)}</div><div class="foot">Recorded approved costs only</div></div><div class="stat"><div class="stat-label">Needs attention</div><div class="val">${attention}</div><div class="foot">Funding, on hold or overdue</div></div></div>
     ${!assessed.length&&total?`<div class="notice warn" style="margin-top:14px">Percentages are intentionally blank until you add measurable work items (target, actual quantity and weight). Written updates alone cannot establish physical completion.</div>`:''}
     <div class="section-title"><h3>Projects at a glance</h3><button class="button tiny ghost" data-action="navigate" data-page="projects">View all</button></div>
@@ -126,14 +387,30 @@
     <div class="panel"><h3>Latest status report</h3>${last?`<div class="small muted">${esc(last.period||displayDate(last.date))}</div><p style="white-space:pre-wrap">${esc(last.note)}</p>`:`<p class="muted">No updates yet.</p>`}<button class="button primary" data-action="new-update" data-id="${p.id}">+ Record update</button></div>`;
     if(view.detailTab==='progress')content=`<div class="panel"><div class="flex between"><h3>Quantified work items</h3><button class="button tiny primary" data-action="new-activity" data-id="${p.id}">+ Add item</button></div><p class="progress-note">Define measured work packages such as flooring (m²), installed pipe (m), equipment (units), or milestone (1 complete / 0 incomplete). Physical completion = sum of weight × (actual ÷ target), divided by total weights. Each item caps at 100%.</p>${v!==null?`<div class="progress-line"><b>${percent(v)}% overall</b><span class="small muted">${projectActivities(p.id).length} work item(s)</span></div>${progressMarkup(v)}`:''}${projectActivities(p.id).length?projectActivities(p.id).map(a=>activityEntry(a)).join(''):`<div class="empty"><h3>No measured items yet</h3><p>Add a work item before reporting a physical completion percentage.</p></div>`}</div><div class="panel"><h3>Budget and disbursement</h3><div class="progress-line"><span>Approved cost</span><b style="font-size:16px">${p.approvedBudget!=null?money(p.approvedBudget):'—'}</b></div><div class="progress-line"><span>Recorded paid/disbursed</span><b style="font-size:16px">${p.amountSpent!=null?money(p.amountSpent):'—'}</b></div><div class="progress-line"><span>Utilization</span><b>${f===null?'—':Math.round(f)+'%'}</b></div>${progressMarkup(f)}<p class="helper">Disbursement ÷ approved cost. This is NOT the contractor's physical accomplishment or obligation rate.</p><button class="button ghost" data-action="edit-project" data-id="${p.id}">Edit financial fields</button></div>`;
     if(view.detailTab==='journal')content=`<div class="panel"><div class="flex between"><h3>Status / update history</h3><button class="button tiny primary" data-action="new-update" data-id="${p.id}">+ Update</button></div>${projectUpdates(p.id).length?`<div class="timeline">${projectUpdates(p.id).map(u=>timelineEntry(u)).join('')}</div>`:`<div class="empty">No journal entries.</div>`}</div>`;
-    if(view.detailTab==='files')content=`<div class="notice">Attached files stay in this device's browser storage, not on GitHub. Include them when exporting your JSON backup. An external URL is only a reference, not a stored copy.</div><div class="panel"><div class="flex between"><h3>Project file cabinet</h3><button class="button tiny primary" data-action="attach-file" data-id="${p.id}">+ Attach</button></div><div class="actions"><button class="button tiny ghost" data-action="new-link" data-id="${p.id}">+ Document link</button></div><div id="documentList" class="list" style="margin-top:12px"><p class="helper">Opening local files…</p></div></div>`;
+    if(view.detailTab==='files')content=`<div class="notice">Attached files stay on this device, not in GitHub or Cloudflare D1; other users cannot view them. Include them when exporting your JSON backup. An external URL is only a reference, not a stored copy.</div><div class="panel"><div class="flex between"><h3>Project file cabinet</h3><button class="button tiny primary" data-action="attach-file" data-id="${p.id}">+ Attach</button></div><div class="actions"><button class="button tiny ghost" data-action="new-link" data-id="${p.id}">+ Document link</button></div><div id="documentList" class="list" style="margin-top:12px"><p class="helper">Opening local files…</p></div></div>`;
     return `<button class="button tiny ghost" data-action="navigate" data-page="projects" style="margin-bottom:14px">‹ All projects</button><div class="head"><div class="grow"><div class="eyebrow">Project 201 Record</div><h2 class="detail-name">${esc(p.title)}</h2><div class="flex" style="flex-wrap:wrap;gap:7px">${statusChip(p)}<span class="small muted">📍 ${esc(p.location||'Location not set')}</span></div></div></div><div class="actions" style="margin-bottom:12px"><button class="button tiny primary" data-action="new-update" data-id="${p.id}">+ Status update</button><button class="button tiny ghost" data-action="export-dossier" data-id="${p.id}">Export 201</button><button class="button tiny ghost" data-action="ai-project" data-id="${p.id}">AI review</button><button class="button tiny ghost" data-action="edit-project" data-id="${p.id}">Edit profile</button><button class="button tiny danger" data-action="delete-project" data-id="${p.id}">Delete project</button></div><div class="mini-tabs">${[['overview','Overview'],['progress','Quantities'],['journal','Timeline'],['files','Documents']].map(([key,label])=>`<button class="${view.detailTab===key?'active':''}" data-action="detail-tab" data-tab="${key}">${label}</button>`).join('')}</div>${content}${footer()}`;}
   function activityEntry(a){let pct=Number(a.target)>0?percent(Number(a.actual||0)/Number(a.target)*100):0;return `<div class="activity"><div class="activity-top"><div class="grow"><h4>${esc(a.name)}</h4><div class="small muted">Weight: ${num(a.weight)} · ${esc(a.notes||'')}</div></div><div class="numbers">${num(a.actual)} / ${num(a.target)} ${esc(a.unit||'units')}</div></div>${progressMarkup(pct)}<div class="flex between"><div class="small muted">${pct}% item completion</div><div class="actions"><button class="button tiny ghost" data-action="edit-activity" data-id="${a.id}">Edit quantity</button><button class="button tiny danger" data-action="delete-activity" data-id="${a.id}">×</button></div></div></div>`;}
-  function backupPage(){return `${heading('Local data & backup','Manage imports, exports and iPhone storage')}<div class="notice warn"><b>Local-only means device-specific.</b> GitHub stores the app code, not your saved project data. Safari and an Add-to-Home-Screen app may use separate storage. Clearing website data, changing devices, or reinstalling the web app may delete your records. Export a backup after significant edits.</div><div class="panel"><h3>Import your monitoring CSV</h3><p class="helper">Supports your existing <b>Project Monitoring.csv</b> layout: project titles across columns, project information in rows, and monthly updates with continuation lines. Existing records are merged by project title.</p><label class="check"><input type="checkbox" id="replaceImported"><span>Replace matching monthly entries previously imported from CSV (does not replace manually added updates)</span></label><button class="button primary wide" data-action="choose-csv">Import CSV file</button></div><div class="panel"><h3>Complete JSON backup</h3><p class="helper">Export all project profiles, work quantities, updates, and the actual contents of locally attached documents. Save in Files, iCloud Drive, or another location you control.</p><button class="button dark wide" data-action="export-backup">Export full backup (.json)</button><div class="separator"></div><p class="helper">Restoring replaces this device's current records. Make a backup before restoring.</p><button class="button ghost wide" data-action="choose-restore">Restore JSON backup</button></div><div class="panel"><h3>Other export options</h3><div class="actions"><button class="button ghost" data-action="export-summary">Export project summary CSV</button><button class="button ghost" data-action="new-project">+ New project</button></div></div><div class="panel"><h3>Built-in AI Center</h3><p class="helper">AI Analyst and AI Advisor run on this device with transparent rules. They require no API key, cloud model, subscription, or internet connection once the app has loaded. AI only reads project records and suggests follow-ups; it never modifies data.</p><button class="button ghost wide" data-action="navigate" data-page="ai">Open AI Center</button></div><div class="panel"><h3>Offline app availability</h3><p class="helper">The app installs its offline files automatically when opened from GitHub Pages while online. Wait for the green <b>Offline ready</b> indicator, then open the Home Screen app once while online and check that it also shows Offline ready. You can then launch and work in Airplane Mode. A completely new GitHub URL cannot load offline before the app has been downloaded.</p><div id="offlineDetails" class="offline-panel"><span class="offline-dot wait"></span><div><strong>Checking offline copy…</strong><div class="small">The offline app shell consists of the complete HTML, service worker, manifest and MOS icons.</div></div></div><div class="actions"><button class="button ghost" data-action="check-app-updates">Check app updates</button><button class="button ghost" data-action="verify-offline">Verify offline setup</button></div></div><div class="panel"><h3>Storage and privacy</h3><div class="small" id="storageInfo">Checking local storage…</div><div class="separator"></div><p class="helper">Your project records are saved with browser localStorage; attached files use IndexedDB. The app contains no analytics, tracking SDKs, user accounts, or automatic uploads.</p><p class="helper">After offline setup is complete, the app interface, all locally stored project records, built-in AI analysis, and saved document attachments work without internet. Links to external websites or documents still require connectivity. Browser/iOS storage cleanup can remove cached files or project data, so keep a JSON backup.</p><button class="button danger" data-action="erase-all">Delete all local project data</button></div>${footer()}`;}
+  function backupPage(){
+    const account=`${heading('Cloud account & backup','Authorized access, shared monitoring and offline copies')}${cloudAccountPanel()}${cloudAdminPanel()}`;
+    if(cloud.user?.role==='viewer')return account+`<div class="panel"><h3>Built-in AI Center</h3><p class="helper">Read-only AI Analyst and AI Advisor run on the downloaded project records without paid AI services.</p><button class="button ghost wide" data-action="navigate" data-page="ai">Open AI Center</button></div>${footer()}`;
+    return account+`<div class="panel"><h3>Import monitoring CSV</h3><p class="helper">The original Project Monitoring.csv layout remains supported. Imported project text and progress reports are uploaded into the shared cloud database when online.</p>
+      <label class="check"><input type="checkbox" id="replaceImported"><span>Replace matching monthly entries previously imported from CSV (manual entries retained)</span></label>
+      <button class="button primary wide" data-action="choose-csv">Import CSV file</button></div>
+    <div class="panel"><h3>JSON backup</h3><p class="helper">Export the shared project profiles, quantities and reports, plus document attachments saved on this specific device. Cloudflare D1 does not store these attachments.</p>
+      <button class="button dark wide" data-action="export-backup">Export full JSON backup</button>
+      ${cloud.user?.role==='admin'?`<div class="separator"></div><p class="helper">Restoring a JSON backup will replace the <b>shared cloud dataset</b> after sync; other users will see the replacement. Only administrators can restore.</p><button class="button ghost wide" data-action="choose-restore">Restore shared records from JSON</button>`:''}</div>
+    <div class="panel"><h3>Project export</h3><div class="actions"><button class="button ghost" data-action="export-summary">Export project summary CSV</button><button class="button ghost" data-action="new-project">+ New project</button></div></div>
+    <div class="panel"><h3>Built-in AI Center</h3><p class="helper">Free, rule-based local AI Analyst and Advisor; no paid API key or subscription. The analyses use the current cloud snapshot, or the most recently cached copy offline.</p><button class="button ghost wide" data-action="navigate" data-page="ai">Open AI Center</button></div>
+    <div class="panel"><h3>Offline app availability</h3><p class="helper">GitHub Pages files are automatically cached after the first online visit. Existing signed-in users can use the cached project copy offline, with unsynced drafts queued until the network returns. Edits can conflict if another editor changes the dataset before your device reconnects; the app preserves your draft instead of overwriting cloud data.</p>
+      <div id="offlineDetails" class="offline-panel"><span class="offline-dot wait"></span><div><strong>Checking offline shell…</strong><div class="small">HTML, manifest, service worker and MOS icons.</div></div></div>
+      <div class="actions"><button class="button ghost" data-action="check-app-updates">Check app updates</button><button class="button ghost" data-action="verify-offline">Verify offline setup</button></div></div>
+    <div class="panel"><h3>Local attachment storage</h3><div id="storageInfo" class="small">Checking on-device attachment usage…</div>
+      <p class="helper">Cloud project data is separate from the original v1.2.1 local database. Keep JSON backups securely. File attachments continue to be device-only, and links may require connectivity.</p></div>${footer()}`;
+  }
 
   function modalOpen(html){modalClose();document.getElementById('modalMount').innerHTML=`<div class="modal-wrap" role="presentation"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;document.body.style.overflow='hidden';setTimeout(()=>document.querySelector('.modal [autofocus]')?.focus(),0);}
   function modalClose(){if(modalUrl){URL.revokeObjectURL(modalUrl);modalUrl=null}document.getElementById('modalMount').innerHTML='';document.body.style.overflow='';}
-  function modalFrame(title,formType,body,submitLabel='Save'){return `<form data-form="${formType}"><h2>${esc(title)}</h2><p class="helper">Changes are stored only on this device.</p>${body}<div class="modal-actions"><button type="button" class="button ghost" data-action="close-modal">Cancel</button><button type="submit" class="button primary">${esc(submitLabel)}</button></div></form>`;}
+  function modalFrame(title,formType,body,submitLabel='Save'){return `<form data-form="${formType}"><h2>${esc(title)}</h2><p class="helper">Changes sync to Cloudflare D1 when online, with an offline draft saved on this device.</p>${body}<div class="modal-actions"><button type="button" class="button ghost" data-action="close-modal">Cancel</button><button type="submit" class="button primary">${esc(submitLabel)}</button></div></form>`;}
   function field(name,label,value='',type='text',additional=''){return `<div class="field"><label for="f-${name}">${esc(label)}</label><input id="f-${name}" name="${name}" type="${type}" value="${esc(value??'')}" ${additional}></div>`;}
   function selectField(name,label,choices,value){return `<div class="field"><label>${esc(label)}</label><select name="${name}">${choices.map(x=>`<option value="${esc(x)}" ${x===value?'selected':''}>${esc(x)}</option>`).join('')}</select></div>`;}
   function textArea(name,label,value=''){return `<div class="field full"><label>${esc(label)}</label><textarea name="${name}">${esc(value)}</textarea></div>`;}
@@ -169,7 +446,7 @@
   function csvEscape(x){let s=String(x??'');return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
   function download(name,content,type){let blob=content instanceof Blob?content:new Blob([content],{type});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
   async function backupExport(){try{let docs=await allDocs();let out=[];for(let d of docs){let copy={...d};if(d.blob){copy.fileData=await readAsDataUrl(d.blob);delete copy.blob;}out.push(copy);}let packageData={app:'MOS Project Monitor',version:VERSION,exportedAt:new Date().toISOString(),data,documents:out};download(`MOS-Project-Monitor-Backup-${today()}.json`,JSON.stringify(packageData),'application/json');alert('Backup prepared. Save the JSON file in a safe location outside the app.');}catch(err){alert('Backup failed: '+err.message);}}
-  async function backupRestore(file){if(!file)return;try{let obj=JSON.parse(await file.text());if(obj?.app!=='MOS Project Monitor'||!obj.data||!Array.isArray(obj.data.projects)||!Array.isArray(obj.data.updates)||!Array.isArray(obj.data.activities)||!Array.isArray(obj.documents))throw Error('This is not a compatible complete MOS Project Monitor backup.');if(!confirm(`Replace ALL data on this device with ${obj.data.projects.length} project(s) and ${obj.documents.length} document(s) from this backup?\n\nExport your current data first.`))return;let docs=[];for(let raw of obj.documents){let d={...raw};if(d.fileData){d.blob=blobFromDataURL(d.fileData);delete d.fileData;}docs.push(d);}await clearDocs();for(let d of docs)await putDoc(d);data=obj.data;save();view.page='dashboard';render();alert('Restore complete.');}catch(err){alert('Restore failed: '+err.message+'\nCheck your backup before trying again.');}}
+  async function backupRestore(file){if(!file)return;if(cloud.user?.role!=='admin')throw Error('Only an administrator may restore a shared cloud backup.');try{let obj=JSON.parse(await file.text());if(obj?.app!=='MOS Project Monitor'||!obj.data||!Array.isArray(obj.data.projects)||!Array.isArray(obj.data.updates)||!Array.isArray(obj.data.activities)||!Array.isArray(obj.documents))throw Error('This is not a compatible complete MOS Project Monitor backup.');if(!confirm(`Replace the SHARED CLOUD DATA with ${obj.data.projects.length} project(s), plus ${obj.documents.length} local document(s) from this backup?\n\nExport your current data first.`))return;let docs=[];for(let raw of obj.documents){let d={...raw};if(d.fileData){d.blob=blobFromDataURL(d.fileData);delete d.fileData;}docs.push(d);}await clearDocs();for(let d of docs)await putDoc(d);data=obj.data;save();view.page='dashboard';render();alert('Restore complete.');}catch(err){alert('Restore failed: '+err.message+'\nCheck your backup before trying again.');}}
   function exportSummary(){let head=['Project title','Location','Implementing office','Current stage','Approved cost PHP','Amount disbursed PHP','Physical %','Financial %','Contract days','Start date','Target date','Latest update date'];let rows=data.projects.map(p=>{let latest=projectUpdates(p.id)[0],v=physical(p.id),f=financial(p);return [p.title,p.location,p.implementingOffice,p.status,p.approvedBudget??'',p.amountSpent??'',v===null?'':v.toFixed(2),f===null?'':f.toFixed(2),p.durationDays??'',p.startDate,p.targetDate,latest?.date||''];});download(`MOS-Project-Summary-${today()}.csv`,[head,...rows].map(r=>r.map(csvEscape).join(',')).join('\r\n'),'text/csv;charset=utf-8');}
   function exportDossier(pid){let p=project(pid);if(!p)return;let v=physical(pid),f=financial(p),activities=projectActivities(pid),updates=projectUpdates(pid);let info=[['Location',p.location],['Implementing office',p.implementingOffice],['End-user',p.endUser],['Funding source',p.fundingSource],['Contractor',p.contractor],['Status',p.status],['Approved cost',p.approvedBudget!=null?money(p.approvedBudget):'Not entered'],['Paid / disbursed',p.amountSpent!=null?money(p.amountSpent):'Not entered'],['Physical accomplishment',v!==null?percent(v)+'%':'Not measured'],['Financial utilization',f!==null?Math.round(f)+'%':'Not measured'],['Contract duration (days)',p.durationDays],['Start date',p.startDate],['Target date',p.targetDate],['Focal person',p.focalPerson],['Contract / reference',p.referenceNo]];let html=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(p.title)} — Project 201</title><style>body{font:14px/1.5 -apple-system,Arial,sans-serif;max-width:850px;margin:32px auto;padding:0 18px;color:#17263b}h1{font-size:25px}h2{font-size:17px;margin-top:26px;border-bottom:2px solid #173049;padding-bottom:6px}table{border-collapse:collapse;width:100%}td,th{padding:8px;border:1px solid #cdd9e3;text-align:left;vertical-align:top}td:first-child{width:36%;background:#f5f8fa}.entry{border-left:3px solid #00757c;padding:2px 14px;margin-bottom:20px;white-space:pre-wrap}.muted{color:#607189;font-size:12px}@media print{body{margin:0;max-width:none}}</style></head><body><div class="muted">METRO ORMOC SLAUGHTERHOUSE · PROJECT 201 FILE</div><h1>${esc(p.title)}</h1><p class="muted">Generated ${esc(displayDate(today()))} · MOS Project Monitor v${VERSION}</p><h2>Project profile</h2><table>${info.map(([k,val])=>`<tr><td>${esc(k)}</td><td>${esc(val??'—')}</td></tr>`).join('')}</table><h2>Measurable work packages</h2><table><tr><th>Item</th><th>Target</th><th>Accomplished</th><th>Weight</th></tr>${activities.map(a=>`<tr><td>${esc(a.name)}</td><td>${esc(num(a.target)+' '+(a.unit||''))}</td><td>${esc(num(a.actual)+' '+(a.unit||''))}</td><td>${esc(num(a.weight))}</td></tr>`).join('')||'<tr><td colspan="4">Not measured</td></tr>'}</table><h2>Project history</h2>${updates.map(u=>`<div class="entry"><b>${esc(u.period||displayDate(u.date))}</b><p>${esc(u.note)}</p>${u.nextAction?`<small>Next action: ${esc(u.nextAction)}</small>`:''}</div>`).join('')||'<p>No reports.</p>'}<h2>Other remarks</h2><p>${esc(p.remarks||'—')}</p><p class="muted">Attached file contents are included only in the complete JSON backup, not in this HTML report. Project percentages require actual measurable entries.</p></body></html>`;download('MOS-201-'+p.title.replace(/[^a-z0-9]+/gi,'-').slice(0,65)+'.html',html,'text/html;charset=utf-8');}
   async function storageInfo(){let elem=document.getElementById('storageInfo');if(!elem)return;try{let docs=await allDocs();let bytes=docs.reduce((s,d)=>s+(Number(d.size)||0),0);let text=`${data.projects.length} projects · ${data.updates.length} journal entries · ${data.activities.length} measurable work items · ${docs.length} linked/attached files (${(bytes/1024/1024).toFixed(1)} MB)`;if(navigator.storage?.estimate){let s=await navigator.storage.estimate();if(s.quota)text+=`<div class="small muted">Estimated browser usage: ${(s.usage/1024/1024).toFixed(1)} MB / ${(s.quota/1024/1024).toFixed(0)} MB quota (may change).</div>`;}if(document.getElementById('storageInfo'))document.getElementById('storageInfo').innerHTML=text;}catch(err){if(elem)elem.textContent='Project text stored locally. Document storage not available: '+err.message;}}
@@ -245,7 +522,7 @@
     let critical=allFindings.filter(x=>x.severity==='Critical').length;
     let high=allFindings.filter(x=>x.severity==='High').length;
     return `${heading('AI Center','AI Analyst + AI Advisor · Free, built into this app')}
-      <div class="notice"><b>Runs privately on this iPhone.</b> The AI Center uses transparent, rule-based analysis of your records; it does not download an AI model or call a paid/cloud AI service. It is not a generative chatbot and cannot edit project data.</div>
+      <div class="notice"><b>Runs privately on your device.</b> The AI Center uses transparent, rule-based analysis of locally cached Cloudflare project records; it does not download an AI model or call a paid/cloud AI service. It is not a generative chatbot and cannot edit project data.</div>
       ${aiFilters()}
       <div class="mini-tabs ai-tabs"><button data-action="ai-tab" data-tab="analyst" class="${view.aiTab==='analyst'?'active':''}">📊 AI Analyst</button><button data-action="ai-tab" data-tab="advisor" class="${view.aiTab==='advisor'?'active':''}">💡 AI Advisor ${critical+high?`(${critical+high})`:''}</button></div>
       ${!projects.length?`<div class="empty"><h3>No projects available</h3><p>Import your monitoring CSV or create a project to start the analysis.</p><button class="button primary" data-action="choose-csv">Import CSV</button></div>`:view.aiTab==='advisor'?aiAdvisor(projects,allFindings):aiAnalyst(projects,allFindings)}${footer()}`;
@@ -301,8 +578,9 @@
 
 
 
-  // Offline-first PWA (v1.2.1): precached app shell; project data stays in the original
-  // localStorage and IndexedDB. Never cache, upload or transmit private records.
+  // Offline-first PWA: app shell is precached. Authorized records are cached locally
+  // for offline reading/editing and synchronized to Cloudflare D1 when online;
+  // original v1.2.1 local records and IndexedDB documents remain preserved.
   const OFFLINE_INDEX=new URL('./index.html',document.baseURI).href;
   let offlineReady=false, swReg=null, hadServiceWorkerController=false, swReloadStarted=false;
   function offlineMessage(){
@@ -371,6 +649,12 @@
   }
 
   document.addEventListener('click',async ev=>{let el=ev.target.closest('[data-action]');if(!el)return;let a=el.dataset.action, pid=el.dataset.id;try{
+    if(a.startsWith('cloud-')){await cloudClick(a,pid);return;}
+    if(!cloud.user||cloud.user.mustChangePassword)throw Error('Please sign in before using this app.');
+    if(EDIT_ACTIONS.has(a)&&!canEdit())throw Error('Read-only viewer access cannot modify records.');
+    if(a==='choose-restore'&&cloud.user.role!=='admin')throw Error('Only administrators can restore a cloud backup.');
+    if(a==='erase-all')throw Error('Shared cloud data cannot be erased using the former local-only action. Delete individual projects if required.');
+
     if(a==='check-app-updates')await checkAppUpdates();else if(a==='verify-offline'){await refreshOfflineStatus();alert(offlineReady?'Offline files are saved on this device. Test once with Airplane Mode on.':'Offline files are not yet confirmed. Open this app online and keep it open until it shows Offline ready.');}else if(a==='navigate')go(el.dataset.page);else if(a==='ai-tab'){view.aiTab=el.dataset.tab;render();}else if(a==='ai-project'){view.aiScope=pid;view.aiTab='analyst';go('ai');}else if(a==='ai-fix'){if(el.dataset.kind==='edit')projectModal(pid);else if(el.dataset.kind==='log')updateModal(null,pid);else if(el.dataset.kind==='quantities'){view.detailTab='progress';go('detail',pid);}else{view.detailTab='overview';go('detail',pid);}}else if(a==='export-ai-report')aiExportReport();else if(a==='detail'){view.detailTab='overview';go('detail',pid);}else if(a==='detail-tab'){view.detailTab=el.dataset.tab;render();}
     else if(a==='new-project')projectModal();else if(a==='edit-project')projectModal(pid);else if(a==='delete-project'){let p=project(pid);if(p&&confirm(`Delete ${p.title} and its project file, all updates, quantities, and attachments from this iPhone? Export a backup first.`)){let docs=await docsFor(pid);for(let d of docs)await delDoc(d.id);data.projects=data.projects.filter(x=>x.id!==pid);data.updates=data.updates.filter(x=>x.projectId!==pid);data.activities=data.activities.filter(x=>x.projectId!==pid);save();go('projects');}}
     else if(a==='new-update')updateModal(null,pid);else if(a==='edit-update')updateModal(pid);
@@ -384,6 +668,9 @@
     else if(a==='close-modal')modalClose();else if(a==='erase-all'){if(confirm('Delete ALL project text, quantities and attachments stored in this browser? Export a backup first.')){if(confirm('Final confirmation: this cannot be undone without a backup.')){await clearDocs();data=blankData();save();go('dashboard');}}}
   }catch(err){alert('Action unsuccessful: '+err.message);}});
   document.addEventListener('submit',async ev=>{let form=ev.target.closest('form[data-form]');if(!form)return;ev.preventDefault();let x=Object.fromEntries(new FormData(form));try{
+    if(form.dataset.form.startsWith('cloud-')){await cloudSubmit(form,x);return;}
+    if(!canEdit())throw Error('You do not have permission to update projects.');
+
     if(form.dataset.form==='project'){if(!x.title?.trim())throw Error('Project title is required');let pid=x.id||id(), old=project(pid);let p={...(old||{}),id:pid,title:x.title.trim(),location:x.location.trim(),implementingOffice:x.implementingOffice.trim(),endUser:x.endUser.trim(),fundingSource:x.fundingSource.trim(),contractor:x.contractor.trim(),focalPerson:x.focalPerson.trim(),referenceNo:x.referenceNo.trim(),status:x.status,priority:x.priority,approvedBudget:asAmount(x.approvedBudget),amountSpent:asAmount(x.amountSpent),durationDays:asAmount(x.durationDays),startDate:x.startDate,targetDate:x.targetDate,remarks:x.remarks.trim(),statusSuggested:false,createdAt:old?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};if(p.startDate&&p.targetDate&&p.targetDate<p.startDate)throw Error('Target date must not precede start date');if(old)Object.assign(old,p);else data.projects.push(p);save();view.detailTab='overview';view.pid=pid;view.page='detail';}
     else if(form.dataset.form==='update'){if(!x.note?.trim())throw Error('Write the status report first');let u=data.updates.find(o=>o.id===x.id),changedDate=u&&u.date!==x.date;let result={id:u?.id||id(),projectId:x.projectId,date:x.date,period:!changedDate?u?.period||'':'',source:u?.source||'manual',sourceMonth:u?.sourceMonth||'',note:x.note.trim(),stage:x.stage,nextAction:x.nextAction.trim(),responsible:x.responsible.trim(),createdAt:u?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};if(u)Object.assign(u,result);else data.updates.push(result);let p=project(x.projectId);if(p&&projectUpdates(x.projectId).every(t=>t.date<=x.date)){p.status=x.stage;p.statusSuggested=false;}save();}
     else if(form.dataset.form==='activity'){let target=Number(x.target),actual=Number(x.actual),weight=Number(x.weight);if(!x.name?.trim()||!(target>0)||!(weight>0)||actual<0||!Number.isFinite(actual))throw Error('Enter a name, positive target/weight, and a valid actual quantity');let a=data.activities.find(o=>o.id===x.id),r={id:a?.id||id(),projectId:x.projectId,name:x.name.trim(),target,actual,unit:x.unit.trim(),weight,notes:x.notes.trim(),updatedAt:new Date().toISOString()};if(a)Object.assign(a,r);else data.activities.push(r);save();}
@@ -396,7 +683,7 @@
   document.getElementById('restoreInput').addEventListener('change',async ev=>{await backupRestore(ev.target.files[0]);ev.target.value='';});
   document.getElementById('documentInput').addEventListener('change',async ev=>{await documentPicked([...ev.target.files]);ev.target.value='';});
   document.getElementById('modalMount').addEventListener('click',ev=>{if(ev.target.classList.contains('modal-wrap'))modalClose();});
-  render();
+  initCloudSession();
   initOfflineSupport();
   </script>
 </body>

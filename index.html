@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MOS Monitor">
-  <meta name="app-version" content="1.3.1">
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.3.1">
-  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.3.1">
+  <meta name="app-version" content="1.3.2">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.3.2">
+  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.3.2">
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Private shared Project 201 progress monitoring with Cloudflare login and offline cache">
@@ -48,7 +48,7 @@
     @media(min-width:700px){body{padding-bottom:70px}.top{padding-top:14px}.nav{left:50%;transform:translateX(-50%);bottom:12px;max-width:480px;border:1px solid var(--line);border-radius:18px;padding:6px;box-shadow:0 9px 35px #101e3326}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.grid.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 210px}.modal-wrap{align-items:center;padding:20px}.modal{max-height:90vh;border-radius:22px}}
     @media(max-width:375px){.head h2{font-size:21px}.stat .val{font-size:22px}.brand h1{font-size:15px}.form-grid{grid-template-columns:1fr}}
 
-    /* v1.3.1: Offline-first support, without changing any project or document data. */
+    /* v1.3.2: Offline-first support, without changing any project or document data. */
     .offline-strip{max-width:1040px;margin:7px auto 0;font-size:11px;color:#c9e7e9;display:flex;align-items:center;gap:7px;line-height:1.35;min-height:15px}
     .offline-dot{display:inline-block;width:8px;height:8px;border-radius:100%;background:#e9bd61;flex-shrink:0}
     .offline-dot.ready{background:#71db9d}.offline-dot.wait{background:#f4c97b}.offline-dot.fail{background:#f0a0a0}
@@ -57,7 +57,7 @@
     .offline-panel .small{line-height:1.45;color:#486875}
     @media(max-width:420px){.offline-strip{font-size:10px}.top-row{gap:6px}.version{padding:4px 7px}}
 
-    /* v1.3.1 secure cloud access */
+    /* v1.3.2 secure cloud access */
     .cloud-banner{padding:12px 14px;margin-bottom:15px;border:1px solid #bfdfda;background:#eef8f5;border-radius:14px;display:flex;align-items:center;gap:10px;justify-content:space-between}
     .cloud-banner strong{font-size:12px;display:block;color:#156050}.cloud-banner .small{font-size:11px;color:#457367;overflow-wrap:anywhere}
     .cloud-banner.pending{background:#fff8e5;border-color:#e9d4a4}.cloud-banner.pending strong{color:#87600b}
@@ -69,7 +69,7 @@
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.3.1" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Secure Cloud 201 Files</small></div></div><span class="version">v1.3.1</span></div><div id="offlineBar" class="offline-strip" role="status" aria-live="polite"><span class="offline-dot wait"></span><span id="offlineBarText">Preparing offline availability…</span></div></header>
+  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.3.2" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Secure Cloud 201 Files</small></div></div><span class="version">v1.3.2</span></div><div id="offlineBar" class="offline-strip" role="status" aria-live="polite"><span class="offline-dot wait"></span><span id="offlineBarText">Preparing offline availability…</span></div></header>
   <main id="app"></main>
   <nav class="nav" id="nav" aria-label="Main navigation"></nav>
   <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" hidden>
@@ -79,13 +79,13 @@
   <script>
   'use strict';
   // Authorized project text is shared using Cloudflare Worker + D1. Legacy v1.2.1 local records stay preserved for migration.
-  const VERSION='1.3.1', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
+  const VERSION='1.3.2', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
   const STATUSES=['Needs Review','Planning','Procurement','Awaiting Funding','Construction','On Hold','Completed','Cancelled'];
   const PRIORITIES=['Normal','High','Critical'];
   const app=document.getElementById('app'), nav=document.getElementById('nav');
   const view={page:'dashboard',pid:null,detailTab:'overview',query:'',statusFilter:'All',updatesFilter:'All',aiTab:'analyst',aiScope:'All',aiSeverity:'All',aiCategory:'All'};
   let data=loadData(); let dbPromise=null; let modalUrl=null;
-  // v1.3.1 Cloudflare D1 shared project monitoring.
+  // v1.3.2 Cloudflare D1 shared project monitoring.
   // Original v1.2.1 local database is preserved solely for deliberate migration.
   const CLOUD_AUTH_KEY='mos-project-monitor-cloud-auth-v1';
   const CLOUD_API_KEY='mos-project-monitor-cloud-api-v1';
@@ -94,7 +94,7 @@
   const DEFAULT_WORKER_URL=PUBLIC_WORKER_URL.includes('REPLACE-')?'':PUBLIC_WORKER_URL;
   const CLOUD_CACHE_PREFIX='mos-project-monitor-cloud-cache-v1:';
   const legacyData=JSON.parse(JSON.stringify(data));
-  const cloud={apiUrl:localStorage.getItem(CLOUD_API_KEY)||DEFAULT_WORKER_URL,token:'',expiresAt:0,user:null,revision:0,dirty:false,conflict:false,working:false,error:'',users:null,loading:true};
+  const cloud={apiUrl:localStorage.getItem(CLOUD_API_KEY)||DEFAULT_WORKER_URL,token:'',expiresAt:0,user:null,revision:0,dirty:false,conflict:false,working:false,error:'',users:null,loading:true,setupStatus:'checking',setupError:''};
   let cloudSyncTimer=null, cloudPollTimer=null;
   const EDIT_ACTIONS=new Set(['new-project','edit-project','delete-project','new-update','edit-update','delete-update','new-activity','edit-activity','delete-activity','choose-csv','choose-restore','attach-file','new-link','delete-doc','erase-all','ai-fix']);
   function canEdit(){return Boolean(cloud.user&&!cloud.user.mustChangePassword&&['admin','editor'].includes(cloud.user.role));}
@@ -141,6 +141,14 @@
   }
   function gateLoginPage(){
     nav.style.display='none';
+    // The Worker is authoritative: never offer bootstrap after an admin exists.
+    const setupPanel=cloud.setupStatus==='initialized'
+      ? '<div class="notice"><b>Cloud administrator already initialized.</b> Sign in with your authorized email and password. Each browser and device has its own login session.</div>'
+      : cloud.setupStatus==='uninitialized'
+        ? '<div class="panel"><h3>First-time administrator setup</h3><p class="helper">No administrator is registered in this cloud database yet. The system owner can initialize the first account once.</p><button class="button ghost wide" data-action="cloud-setup-open">Initialize administrator</button></div>'
+        : cloud.setupStatus==='checking'
+          ? '<div class="panel"><p class="small muted">Checking cloud administrator setup…</p></div>'
+          : `<div class="notice warn"><b>Administrator setup status unavailable.</b> ${esc(cloud.setupError||'An internet connection is needed to check cloud setup.')} <button class="button tiny ghost" data-action="cloud-status-refresh">Retry check</button></div>`;
     return `${heading('Authorized access','Cloudflare login required for shared Project 201 records')}
     <div class="notice warn"><b>Private records are protected by your Cloudflare login.</b> The public GitHub page contains application code only. Your existing offline records remain preserved for migration by an administrator.</div>
     <form class="panel" data-form="cloud-login"><h3>Sign in to MOS Project Monitor</h3>
@@ -148,9 +156,21 @@
     ${field('email','Authorized email address','','email','autocomplete="username" required')}
     ${field('password','Password','','password','autocomplete="current-password" required')}
     <button class="button primary wide" type="submit">Sign in</button></form>
-    <div class="panel"><h3>First-time administrator setup</h3><p class="helper">Only perform this once, after deploying the Worker and setting its secret key. Use the account <b>ormocslaughter@gmail.com</b>.</p>
-    <button class="button ghost wide" data-action="cloud-setup-open">Initialize administrator</button></div>
+    ${setupPanel}
     ${footer()}`;
+  }
+  async function refreshCloudSetupStatus(){
+    if(cloud.user)return;
+    cloud.setupStatus='checking';cloud.setupError='';
+    if(!navigator.onLine){cloud.setupStatus='offline';cloud.setupError='Reconnect to check cloud administrator setup.';render();return;}
+    if(!cloud.apiUrl){cloud.setupStatus='error';cloud.setupError='Set your Worker URL first.';render();return;}
+    try{
+      const status=await cloudRequest('/api/health','GET',null,false);
+      if(typeof status.initialized!=='boolean')throw Error('Cloud health check did not identify setup state.');
+      cloud.setupStatus=status.initialized?'initialized':'uninitialized';
+      cloud.setupError='';
+    }catch(err){cloud.setupStatus='error';cloud.setupError=String(err?.message||err);}
+    if(!cloud.user&&!document.querySelector('.modal-wrap'))render();
   }
   function passwordGatePage(){
     nav.style.display='none';
@@ -168,7 +188,7 @@
     <button class="button tiny ghost" data-action="cloud-logout">Sign out</button></div>
     <div class="progress-note">Shared project profiles, reports and quantities are stored in Cloudflare D1. GitHub serves the app. Attached file contents and local document links are saved on this device only.</div>
     <div class="cloud-detail"><strong>${cloud.conflict?'⚠ Revision conflict':cloud.dirty?'Unsynced local changes':'Revision '+cloud.revision}</strong>
-    <p class="small">${cloud.conflict?'Another editor published changes. Your draft is preserved on this iPhone. Export its backup before choosing to discard and reload.':cloud.dirty?'The draft will sync automatically when the internet is available.':'Use Refresh to check edits from other signed-in users.'}</p></div>
+    <p class="small">${cloud.conflict?'Another editor published changes. Your draft is preserved on this device. Export its backup before choosing to discard and reload.':cloud.dirty?'The draft will sync automatically when the internet is available.':'Use Refresh to check edits from other signed-in users.'}</p></div>
     ${cloud.error?`<div class="notice warn">${esc(cloud.error)}</div>`:''}
     <div class="actions"><button class="button primary" data-action="cloud-sync">${cloud.conflict?'Resolve conflict':'Sync / refresh now'}</button>${cloud.dirty?'<button class="button ghost" data-action="cloud-discard">Discard local draft and load cloud</button>':''}<button class="button ghost" data-action="cloud-password-open">Change password</button></div>
     <p class="helper">An offline copy is accessible on a previously signed-in device until its login session expires; disabling a user cannot erase a copy from a device that remains offline.</p></div>`;}
@@ -177,7 +197,7 @@
     const oldCount=legacyData.projects.length;
     const noCloudData=cloud.revision===0&&data.projects.length===0&&data.updates.length===0&&data.activities.length===0&&!cloud.dirty;
     return `<div class="panel"><h3>First-time migration</h3><p class="helper">Original v1.2.1 data detected on this same device: <b>${oldCount} project(s)</b> and <b>${legacyData.updates.length} reports</b>. Your original local data will remain unchanged.</p>
-      ${oldCount&&noCloudData?'<button class="button primary wide" data-action="cloud-import-old">Import original iPhone records into empty cloud</button>':`<p class="helper">${oldCount?'The one-time import is available only while the cloud is empty.':'No original local project records found on this installation.'}</p>`}
+      ${oldCount&&noCloudData?'<button class="button primary wide" data-action="cloud-import-old">Import original local records into empty cloud</button>':`<p class="helper">${oldCount?'The one-time import is available only while the cloud is empty.':'No original local project records found on this installation.'}</p>`}
       <p class="helper">If the old records were created on another device, use the CSV import or a JSON backup. Document attachment file contents do not move to D1.</p></div>
       <div class="panel"><div class="flex between"><h3>Users and permissions</h3><button class="button tiny primary" data-action="cloud-user-new">+ Add user</button></div>
       <p class="helper">Only administrators create accounts. Roles are enforced by Cloudflare, not just by hidden buttons. Newly created accounts must change their temporary passwords.</p>
@@ -250,7 +270,7 @@
     if(!expired&&token&&navigator.onLine)try{await cloudRequest('/api/auth/logout','POST',{});}catch{}
     if(cloud.user&&!cloud.dirty)localStorage.removeItem(cloudCacheKey());
     cloud.token='';cloud.user=null;cloud.expiresAt=0;cloud.conflict=false;cloud.dirty=false;cloud.revision=0;cloud.users=null;cloud.error=expired?'Your login has expired or access was removed. Sign in again.':'';
-    localStorage.removeItem(CLOUD_AUTH_KEY);data=blankData();view.page='dashboard';modalClose();render();
+    localStorage.removeItem(CLOUD_AUTH_KEY);data=blankData();view.page='dashboard';modalClose();render();void refreshCloudSetupStatus();
   }
   async function initCloudSession(){
     let saved=null;try{saved=JSON.parse(localStorage.getItem(CLOUD_AUTH_KEY)||'null');}catch{}
@@ -258,6 +278,7 @@
       try{cloud.apiUrl=validApiUrl(saved.apiUrl);cloud.token=saved.token;cloud.user=saved.user;cloud.expiresAt=saved.expiresAt;readCloudCache();}catch{}
     }
     cloud.loading=false;render();
+    if(!cloud.user)void refreshCloudSetupStatus();
     if(cloud.user&&navigator.onLine){
       try{const r=await cloudRequest('/api/auth/me');cloud.user=r.user;cloud.expiresAt=r.expiresAt;saveCloudAuth();
         if(!cloud.user.mustChangePassword){if(cloud.dirty)scheduleCloudSync();else await refreshCloudData(true);}
@@ -266,13 +287,15 @@
     }
     window.addEventListener('online',async()=>{
       if(cloud.user){try{const r=await cloudRequest('/api/auth/me');cloud.user=r.user;saveCloudAuth();if(cloud.dirty)await syncCloud();else await refreshCloudData(true);}catch(err){if(err.status===401)await cloudLogout(true);else cloudError(err);}render();}
+      else await refreshCloudSetupStatus();
     });
     cloudPollTimer=setInterval(async()=>{if(cloud.user&&Date.now()>=cloud.expiresAt*1000){await cloudLogout(true);return;}if(cloud.user&&!cloud.user.mustChangePassword&&navigator.onLine&&!document.querySelector('.modal-wrap')){
       try{const r=await cloudRequest('/api/auth/me');cloud.user=r.user;saveCloudAuth();if(cloud.dirty)await syncCloud();else await refreshCloudData(true);}catch(err){if(err.status===401)await cloudLogout(true);else cloudError(err);}
     }},60000);
   }
   async function cloudClick(a,pid){
-    if(a==='cloud-setup-open'){cloudSetupModal();return;}
+    if(a==='cloud-status-refresh'){await refreshCloudSetupStatus();return;}
+    if(a==='cloud-setup-open'){if(cloud.setupStatus!=='uninitialized')throw Error('Administrator setup is only available if the cloud has no administrator. Sign in instead.');cloudSetupModal();return;}
     if(a==='cloud-logout'){await cloudLogout();return;}
     if(a==='cloud-password-open'){modalOpen(changePasswordForm());return;}
     if(a==='cloud-sync'){await syncCloud();return;}
@@ -283,7 +306,7 @@
     }
     if(a==='cloud-import-old'){
       if(cloud.user?.role!=='admin'||cloud.dirty||cloud.revision!==0||data.projects.length)throw Error('Import is allowed only once, into an empty cloud database.');
-      if(!confirm(`Upload ${legacyData.projects.length} original iPhone projects and ${legacyData.updates.length} reports into the shared cloud database? Local copies will remain unchanged. Documents do not sync.`))return;
+      if(!confirm(`Upload ${legacyData.projects.length} original local projects and ${legacyData.updates.length} reports into the shared cloud database? Local copies will remain unchanged. Documents do not sync.`))return;
       const result=await cloudRequest('/api/data/seed','POST',{expectedRevision:0,data:legacyData});
       cloud.revision=result.revision;data=JSON.parse(JSON.stringify(legacyData));cloud.dirty=false;saveCloudCache();render();alert('Initial cloud migration complete. Authorized viewers can now see these records.');return;
     }
@@ -304,6 +327,7 @@
     if(t==='cloud-setup'){
       cloud.apiUrl=validApiUrl(x.apiUrl);localStorage.setItem(CLOUD_API_KEY,cloud.apiUrl);
       await cloudRequest('/api/setup','POST',{email:x.email,name:x.name,password:x.password,setupKey:x.setupKey},false);
+      cloud.setupStatus='initialized';cloud.setupError='';
       modalClose();alert('Administrator initialized. Sign in with your new password.');render();return;
     }
     if(t==='cloud-change-password'){
@@ -585,7 +609,7 @@
   let offlineReady=false, swReg=null, hadServiceWorkerController=false, swReloadStarted=false;
   function offlineMessage(){
     const online=navigator.onLine;
-    if(offlineReady)return online?'Offline ready · App saved on this iPhone':'Offline mode · App works without internet';
+    if(offlineReady)return online?'Online · App saved for offline use on this device':'Offline · Using saved app files on this device';
     if(!('serviceWorker' in navigator))return 'Offline setup unavailable in this browser';
     return online?'Preparing offline app files…':'Offline copy not verified · Connect once to finish setup';
   }
@@ -598,8 +622,8 @@
     const detail=document.getElementById('offlineDetails');
     if(detail){
       const dotClass=offlineReady?'ready':navigator.onLine?'wait':'fail';
-      const title=offlineReady?'Offline ready on this device':navigator.onLine?'Setting up offline files…':'Offline copy not confirmed';
-      const description=offlineReady?(navigator.onLine?'You can switch off mobile data/Wi-Fi and use the app.':'You are using the cached app. All local project data and built-in analysis remain accessible.'):(navigator.onLine?'Remain online until the service worker finishes saving the required app files.':'Reconnect once to complete offline installation.');
+      const title=offlineReady?(navigator.onLine?'Online · App saved for offline use':'Offline · App opened from saved files'):navigator.onLine?'Setting up offline files…':'Offline copy not confirmed';
+      const description=offlineReady?(navigator.onLine?'This browser/device has its own cached app files. Cloud project records still require your authorized login.':'You are using the cached app. Previously synchronized records remain available while your login session is valid.'):(navigator.onLine?'Keep the app open until its required files are saved.':'Reconnect once to complete offline installation.');
       detail.innerHTML=`<span class="offline-dot ${dotClass}"></span><div><strong>${title}</strong><div class="small">${description}</div></div>`;
     }
   }
@@ -656,7 +680,7 @@
     if(a==='erase-all')throw Error('Shared cloud data cannot be erased using the former local-only action. Delete individual projects if required.');
 
     if(a==='check-app-updates')await checkAppUpdates();else if(a==='verify-offline'){await refreshOfflineStatus();alert(offlineReady?'Offline files are saved on this device. Test once with Airplane Mode on.':'Offline files are not yet confirmed. Open this app online and keep it open until it shows Offline ready.');}else if(a==='navigate')go(el.dataset.page);else if(a==='ai-tab'){view.aiTab=el.dataset.tab;render();}else if(a==='ai-project'){view.aiScope=pid;view.aiTab='analyst';go('ai');}else if(a==='ai-fix'){if(el.dataset.kind==='edit')projectModal(pid);else if(el.dataset.kind==='log')updateModal(null,pid);else if(el.dataset.kind==='quantities'){view.detailTab='progress';go('detail',pid);}else{view.detailTab='overview';go('detail',pid);}}else if(a==='export-ai-report')aiExportReport();else if(a==='detail'){view.detailTab='overview';go('detail',pid);}else if(a==='detail-tab'){view.detailTab=el.dataset.tab;render();}
-    else if(a==='new-project')projectModal();else if(a==='edit-project')projectModal(pid);else if(a==='delete-project'){let p=project(pid);if(p&&confirm(`Delete ${p.title} and its project file, all updates, quantities, and attachments from this iPhone? Export a backup first.`)){let docs=await docsFor(pid);for(let d of docs)await delDoc(d.id);data.projects=data.projects.filter(x=>x.id!==pid);data.updates=data.updates.filter(x=>x.projectId!==pid);data.activities=data.activities.filter(x=>x.projectId!==pid);save();go('projects');}}
+    else if(a==='new-project')projectModal();else if(a==='edit-project')projectModal(pid);else if(a==='delete-project'){let p=project(pid);if(p&&confirm(`Delete ${p.title} and its project file, all updates, quantities, and attachments from this device? Export a backup first.`)){let docs=await docsFor(pid);for(let d of docs)await delDoc(d.id);data.projects=data.projects.filter(x=>x.id!==pid);data.updates=data.updates.filter(x=>x.projectId!==pid);data.activities=data.activities.filter(x=>x.projectId!==pid);save();go('projects');}}
     else if(a==='new-update')updateModal(null,pid);else if(a==='edit-update')updateModal(pid);
     else if(a==='delete-update'){if(confirm('Delete this journal entry?')){data.updates=data.updates.filter(u=>u.id!==pid);save();render();}}
     else if(a==='new-activity')activityModal(null,pid);else if(a==='edit-activity')activityModal(pid);

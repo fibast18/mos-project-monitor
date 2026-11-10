@@ -2,7 +2,7 @@
   "id": "./index.html",
   "name": "Metro Ormoc Slaughterhouse Project Monitor",
   "short_name": "MOS Monitor",
-  "description": "MOS Project Monitor v1.3.1: secure cloud project records with built-in offline support and Cloudflare PBKDF2 bootstrap compatibility.",
+  "description": "MOS Project Monitor v1.3.2: secure cloud project records with built-in offline support and conditional one-time administrator setup status.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

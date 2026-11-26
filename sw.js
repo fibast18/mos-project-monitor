@@ -1,11 +1,11 @@
-/* MOS Project Monitor v1.3.2 — offline-first app shell. Cloud project data uses authenticated direct Worker calls, never SW caches. */
+/* MOS Project Monitor v1.4.0 — offline-first app shell. Cloud project data uses authenticated direct Worker calls, never SW caches. */
 'use strict';
-const VERSION='1.3.2';
+const VERSION='1.4.0';
 const CACHE_PREFIX='mos-project-monitor-app-';
 const CACHE_NAME=CACHE_PREFIX+VERSION;
 const ROOT=self.registration.scope;
 const INDEX_URL=new URL('index.html',ROOT).href;
-const FILES=['index.html','apple-touch-icon.png','manifest.webmanifest','icon-192.png','icon-512.png']
+const FILES=['index.html','reports.js','apple-touch-icon.png','manifest.webmanifest','icon-192.png','icon-512.png']
   .map(path=>new URL(path,ROOT).href);
 
 self.addEventListener('install',event=>{

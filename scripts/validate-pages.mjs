@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { Script } from 'node:vm';
 
 const required = [
-  'index.html', 'sw.js', 'manifest.webmanifest',
+  'index.html', 'reports.js', 'sw.js', 'manifest.webmanifest',
   'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'CNAME'
 ];
 for (const file of required) {
@@ -14,6 +14,9 @@ if (cname !== 'projects.mysomis.com') {
 }
 const html = readFileSync('index.html', 'utf8');
 const sw = readFileSync('sw.js', 'utf8');
+const reportsJs = readFileSync('reports.js', 'utf8');
+new Script(reportsJs, { filename: 'reports.js' });
+if (!html.includes('<script src="./reports.js"></script>')) throw new Error('Monthly reports engine is not linked to the application');
 const manifest = JSON.parse(readFileSync('manifest.webmanifest', 'utf8'));
 const htmlVersion = html.match(/<meta\s+name="app-version"\s+content="([^"]+)"/i)?.[1];
 const swVersion = sw.match(/const\s+VERSION\s*=\s*['"]([^'"]+)['"]/i)?.[1];

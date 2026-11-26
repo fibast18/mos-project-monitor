@@ -56,6 +56,10 @@ assert.ok(run('reportAvailableMonths()').includes('2026-09'),'Past reporting per
 assert.match(run("reportSheets(reportBuild('2026-10'))"),/Prepared by:/);
 assert.match(run("reportSheets(reportBuild('2026-10'))"),/Noted by:/);
 assert.match(run('reportPrintStyles()'),/size:13in 8.5in/);
+const borderCss=run('reportPrintStyles()');
+assert.match(borderCss,/width:calc\(100% - 8pt\)/,'table is inset from the printable right edge');
+assert.match(borderCss,/border:1pt solid #444/,'table has an explicit exterior outline');
+assert.match(borderCss,/th:last-child,.mos-report-table td:last-child\{border-right:1pt solid #444\}/,'final column has an explicit right border');
 assert.equal(run("reportNextMonthLabel('2026-10')"),'November 2026');
 updates.find(u=>u.id==='a3').note='<script>alert("bad")</script>';
 assert.doesNotMatch(run("reportSheets(reportBuild('2026-10'))"),/<script>alert/,'Status entries must be HTML escaped');

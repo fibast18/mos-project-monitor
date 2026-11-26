@@ -2,7 +2,7 @@
   "id": "./index.html",
   "name": "Metro Ormoc Slaughterhouse Project Monitor",
   "short_name": "MOS Monitor",
-  "description": "MOS Project Monitor v1.4.0: cloud-synced Project 201 files, offline support, and monthly saved long-bond reports.",
+  "description": "MOS Project Monitor v1.4.1: cloud-synced Project 201 files, offline support, and monthly saved long-bond reports.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

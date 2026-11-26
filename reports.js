@@ -101,8 +101,9 @@ function reportPrintStyles(){
     .mos-report-sheet{background:#fff;color:#000;box-sizing:border-box;width:100%;margin:0 auto;page-break-after:always;break-after:page;font-family:Arial,Helvetica,sans-serif}
     .mos-report-sheet:last-child{page-break-after:auto;break-after:auto}
     .mos-report-sheet h2{font-size:13pt;text-align:center;margin:0 0 7pt;font-weight:800;line-height:1.08}
-    .mos-report-table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:7.2pt;line-height:1.16}
+    .mos-report-table{border-collapse:collapse;box-sizing:border-box;width:calc(100% - 8pt);margin-right:8pt;border:1pt solid #444;table-layout:fixed;font-size:7.2pt;line-height:1.16}
     .mos-report-table th,.mos-report-table td{border:.7pt solid #444;padding:4pt 3pt;vertical-align:top;text-align:left;overflow-wrap:anywhere}
+    .mos-report-table th:last-child,.mos-report-table td:last-child{border-right:1pt solid #444}
     .mos-report-table th:first-child{width:11.5%;font-weight:800}
     .mos-report-table thead th{text-align:center;font-weight:800;vertical-align:middle}
     .mos-report-table .mos-status th{font-weight:800}

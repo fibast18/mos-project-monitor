@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MOS Monitor">
-  <meta name="app-version" content="1.3.2">
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.3.2">
-  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.3.2">
+  <meta name="app-version" content="1.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.4.0">
+  <link rel="icon" type="image/png" href="./apple-touch-icon.png?v=1.4.0">
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Private shared Project 201 progress monitoring with Cloudflare login and offline cache">
@@ -48,7 +48,7 @@
     @media(min-width:700px){body{padding-bottom:70px}.top{padding-top:14px}.nav{left:50%;transform:translateX(-50%);bottom:12px;max-width:480px;border:1px solid var(--line);border-radius:18px;padding:6px;box-shadow:0 9px 35px #101e3326}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.grid.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 210px}.modal-wrap{align-items:center;padding:20px}.modal{max-height:90vh;border-radius:22px}}
     @media(max-width:375px){.head h2{font-size:21px}.stat .val{font-size:22px}.brand h1{font-size:15px}.form-grid{grid-template-columns:1fr}}
 
-    /* v1.3.2: Offline-first support, without changing any project or document data. */
+    /* v1.4.0: Offline-first support, without changing any project or document data. */
     .offline-strip{max-width:1040px;margin:7px auto 0;font-size:11px;color:#c9e7e9;display:flex;align-items:center;gap:7px;line-height:1.35;min-height:15px}
     .offline-dot{display:inline-block;width:8px;height:8px;border-radius:100%;background:#e9bd61;flex-shrink:0}
     .offline-dot.ready{background:#71db9d}.offline-dot.wait{background:#f4c97b}.offline-dot.fail{background:#f0a0a0}
@@ -57,7 +57,7 @@
     .offline-panel .small{line-height:1.45;color:#486875}
     @media(max-width:420px){.offline-strip{font-size:10px}.top-row{gap:6px}.version{padding:4px 7px}}
 
-    /* v1.3.2 secure cloud access */
+    /* v1.4.0 secure cloud access */
     .cloud-banner{padding:12px 14px;margin-bottom:15px;border:1px solid #bfdfda;background:#eef8f5;border-radius:14px;display:flex;align-items:center;gap:10px;justify-content:space-between}
     .cloud-banner strong{font-size:12px;display:block;color:#156050}.cloud-banner .small{font-size:11px;color:#457367;overflow-wrap:anywhere}
     .cloud-banner.pending{background:#fff8e5;border-color:#e9d4a4}.cloud-banner.pending strong{color:#87600b}
@@ -66,26 +66,41 @@
     .cloud-detail p{margin-bottom:0}.cloud-user{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:11px 0}
     .cloud-user:last-child{border-bottom:none}
     @media(max-width:425px){.cloud-banner .button{padding:7px 10px;font-size:11px;min-height:35px}.cloud-user .actions{width:100%}}
+
+    /* v1.4.0 monthly reporting controls and mobile preview */
+    .mos-report-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:9px}
+    .mos-report-controls .caps{display:block;margin-bottom:5px}
+    .mos-report-tags{display:flex;flex-wrap:wrap;gap:7px;margin:11px 0}
+    .mos-report-actions{margin:13px 0}
+    .mos-report-scroll{overflow:auto;border-radius:14px;border:1px solid var(--line);background:#e7ebf0;max-width:100%;padding:12px}
+    .mos-report-preview{width:max-content;max-width:none}
+    .nav{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .nav button{font-size:9px;padding:3px 2px}
+    .nav button .ico{font-size:20px}
+    @media(max-width:440px){.mos-report-controls{grid-template-columns:1fr}.mos-report-scroll{padding:5px}.mos-report-actions .button{flex:1 1 43%}}
+    @media(min-width:700px){.nav{max-width:600px}}
+
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.3.2" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Secure Cloud 201 Files</small></div></div><span class="version">v1.3.2</span></div><div id="offlineBar" class="offline-strip" role="status" aria-live="polite"><span class="offline-dot wait"></span><span id="offlineBarText">Preparing offline availability…</span></div></header>
+  <header class="top"><div class="top-row"><div class="brand"><img class="logo" src="./apple-touch-icon.png?v=1.4.0" alt="MOS seal" width="44" height="44"><div><h1>Metro Ormoc Slaughterhouse</h1><small>Project Monitoring • Secure Cloud 201 Files</small></div></div><span class="version">v1.4.0</span></div><div id="offlineBar" class="offline-strip" role="status" aria-live="polite"><span class="offline-dot wait"></span><span id="offlineBarText">Preparing offline availability…</span></div></header>
   <main id="app"></main>
   <nav class="nav" id="nav" aria-label="Main navigation"></nav>
   <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" hidden>
   <input type="file" id="restoreInput" accept=".json,application/json" hidden>
   <input type="file" id="documentInput" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" multiple hidden>
   <div id="modalMount"></div>
+  <script src="./reports.js"></script>
   <script>
   'use strict';
   // Authorized project text is shared using Cloudflare Worker + D1. Legacy v1.2.1 local records stay preserved for migration.
-  const VERSION='1.3.2', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
+  const VERSION='1.4.0', DATA_KEY='mos-project-monitor-v1', DB_NAME='mos-project-documents-v1';
   const STATUSES=['Needs Review','Planning','Procurement','Awaiting Funding','Construction','On Hold','Completed','Cancelled'];
   const PRIORITIES=['Normal','High','Critical'];
   const app=document.getElementById('app'), nav=document.getElementById('nav');
-  const view={page:'dashboard',pid:null,detailTab:'overview',query:'',statusFilter:'All',updatesFilter:'All',aiTab:'analyst',aiScope:'All',aiSeverity:'All',aiCategory:'All'};
+  const view={page:'dashboard',reportMonth:reportPreviousMonth(),reportMode:'live',pid:null,detailTab:'overview',query:'',statusFilter:'All',updatesFilter:'All',aiTab:'analyst',aiScope:'All',aiSeverity:'All',aiCategory:'All'};
   let data=loadData(); let dbPromise=null; let modalUrl=null;
-  // v1.3.2 Cloudflare D1 shared project monitoring.
+  // v1.4.0 Cloudflare D1 shared project monitoring.
   // Original v1.2.1 local database is preserved solely for deliberate migration.
   const CLOUD_AUTH_KEY='mos-project-monitor-cloud-auth-v1';
   const CLOUD_API_KEY='mos-project-monitor-cloud-api-v1';
@@ -96,7 +111,7 @@
   const legacyData=JSON.parse(JSON.stringify(data));
   const cloud={apiUrl:localStorage.getItem(CLOUD_API_KEY)||DEFAULT_WORKER_URL,token:'',expiresAt:0,user:null,revision:0,dirty:false,conflict:false,working:false,error:'',users:null,loading:true,setupStatus:'checking',setupError:''};
   let cloudSyncTimer=null, cloudPollTimer=null;
-  const EDIT_ACTIONS=new Set(['new-project','edit-project','delete-project','new-update','edit-update','delete-update','new-activity','edit-activity','delete-activity','choose-csv','choose-restore','attach-file','new-link','delete-doc','erase-all','ai-fix']);
+  const EDIT_ACTIONS=new Set(['new-project','edit-project','delete-project','new-update','edit-update','delete-update','new-activity','edit-activity','delete-activity','choose-csv','choose-restore','attach-file','new-link','delete-doc','erase-all','ai-fix','report-save','report-archive-all']);
   function canEdit(){return Boolean(cloud.user&&!cloud.user.mustChangePassword&&['admin','editor'].includes(cloud.user.role));}
   function cloudCacheKey(){return CLOUD_CACHE_PREFIX+(cloud.user?.id||'none')+'@'+cloud.apiUrl;}
   function validApiUrl(input){
@@ -348,7 +363,7 @@
 
   data=blankData();
 
-  function blankData(){return {schemaVersion:1,projects:[],updates:[],activities:[],savedAt:new Date().toISOString()};}
+  function blankData(){return {schemaVersion:1,projects:[],updates:[],activities:[],monthlyReports:[],savedAt:new Date().toISOString()};}
   function loadData(){try{let raw=localStorage.getItem(DATA_KEY);let obj=raw?JSON.parse(raw):blankData();if(!Array.isArray(obj.projects)||!Array.isArray(obj.updates)||!Array.isArray(obj.activities))throw Error('Invalid saved data');return obj;}catch(err){alert('Unable to load saved data: '+err.message+'\nPlease restore a backup if needed.');return blankData();}}
   function save(){if(!canEdit())throw Error('You have read-only permission.');data.savedAt=new Date().toISOString();cloud.dirty=true;cloud.error='';saveCloudCache();scheduleCloudSync();}
   function id(){return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(36).slice(2);}
@@ -373,13 +388,13 @@
   function statusChip(p){return `<span class="chip ${esc(stageClass(p.status))}">${esc(p.status||'Needs Review')}${p.statusSuggested?' · suggested':''}</span>`;}
   function heading(title,subtitle,action=''){return `<div class="head"><div><h2>${esc(title)}</h2><div class="muted small">${esc(subtitle)}</div></div>${action}</div>`;}
   function footer(){return `<div class="footer"><div class="developer-credit">Developed by: Engr. Rico J. Pono</div>MOS Project Monitor v${VERSION} · Secure Cloudflare D1 sync<br>City Government of Ormoc · Project 201 Records</div>`;}
-  function renderNav(){nav.innerHTML=[['dashboard','◫','Dashboard'],['projects','▤','Projects'],['updates','◷','Updates'],['ai','✦','AI Center'],['backup','⇩','Backup']].map(([page,ico,label])=>`<button data-action="navigate" data-page="${page}" class="${view.page===page||(view.page==='detail'&&page==='projects')?'active':''}" aria-label="${label}"><span class="ico">${ico}</span>${label}</button>`).join('');}
+  function renderNav(){nav.innerHTML=[['dashboard','◫','Dashboard'],['projects','▤','Projects'],['updates','◷','Updates'],['reports','▦','Reports'],['ai','✦','AI Center'],['backup','⇩','Backup']].map(([page,ico,label])=>`<button data-action="navigate" data-page="${page}" class="${view.page===page||(view.page==='detail'&&page==='projects')?'active':''}" aria-label="${label}"><span class="ico">${ico}</span>${label}</button>`).join('');}
   function render(){
     if(cloud.loading){nav.style.display='none';app.innerHTML='<div class="panel"><h3>Loading secure project monitoring…</h3></div>';return;}
     if(!cloud.user){app.innerHTML=gateLoginPage();return;}
     if(cloud.user.mustChangePassword){app.innerHTML=passwordGatePage();return;}
     nav.style.display='grid';renderNav();
-    if(view.page==='dashboard')app.innerHTML=dashboard();else if(view.page==='projects')app.innerHTML=projectsPage();else if(view.page==='updates')app.innerHTML=updatesPage();else if(view.page==='backup')app.innerHTML=backupPage();else if(view.page==='ai')app.innerHTML=aiCenterPage();else app.innerHTML=detailPage();
+    if(view.page==='dashboard')app.innerHTML=dashboard();else if(view.page==='projects')app.innerHTML=projectsPage();else if(view.page==='updates')app.innerHTML=updatesPage();else if(view.page==='backup')app.innerHTML=backupPage();else if(view.page==='reports')app.innerHTML=reportsPage();else if(view.page==='ai')app.innerHTML=aiCenterPage();else app.innerHTML=detailPage();
     app.insertAdjacentHTML('afterbegin',cloudBanner());
     if(!canEdit())for(const el of app.querySelectorAll('[data-action]'))if(EDIT_ACTIONS.has(el.dataset.action))el.remove();
     if(view.page==='detail'&&view.detailTab==='files'){
@@ -679,7 +694,8 @@
     if(a==='choose-restore'&&cloud.user.role!=='admin')throw Error('Only administrators can restore a cloud backup.');
     if(a==='erase-all')throw Error('Shared cloud data cannot be erased using the former local-only action. Delete individual projects if required.');
 
-    if(a==='check-app-updates')await checkAppUpdates();else if(a==='verify-offline'){await refreshOfflineStatus();alert(offlineReady?'Offline files are saved on this device. Test once with Airplane Mode on.':'Offline files are not yet confirmed. Open this app online and keep it open until it shows Offline ready.');}else if(a==='navigate')go(el.dataset.page);else if(a==='ai-tab'){view.aiTab=el.dataset.tab;render();}else if(a==='ai-project'){view.aiScope=pid;view.aiTab='analyst';go('ai');}else if(a==='ai-fix'){if(el.dataset.kind==='edit')projectModal(pid);else if(el.dataset.kind==='log')updateModal(null,pid);else if(el.dataset.kind==='quantities'){view.detailTab='progress';go('detail',pid);}else{view.detailTab='overview';go('detail',pid);}}else if(a==='export-ai-report')aiExportReport();else if(a==='detail'){view.detailTab='overview';go('detail',pid);}else if(a==='detail-tab'){view.detailTab=el.dataset.tab;render();}
+    if(a==='report-print')reportPrint();else if(a==='report-download')reportDownload();else if(a==='report-save')reportSaveCurrent();else if(a==='report-archive-all')reportArchiveAll();
+    else if(a==='check-app-updates')await checkAppUpdates();else if(a==='verify-offline'){await refreshOfflineStatus();alert(offlineReady?'Offline files are saved on this device. Test once with Airplane Mode on.':'Offline files are not yet confirmed. Open this app online and keep it open until it shows Offline ready.');}else if(a==='navigate')go(el.dataset.page);else if(a==='ai-tab'){view.aiTab=el.dataset.tab;render();}else if(a==='ai-project'){view.aiScope=pid;view.aiTab='analyst';go('ai');}else if(a==='ai-fix'){if(el.dataset.kind==='edit')projectModal(pid);else if(el.dataset.kind==='log')updateModal(null,pid);else if(el.dataset.kind==='quantities'){view.detailTab='progress';go('detail',pid);}else{view.detailTab='overview';go('detail',pid);}}else if(a==='export-ai-report')aiExportReport();else if(a==='detail'){view.detailTab='overview';go('detail',pid);}else if(a==='detail-tab'){view.detailTab=el.dataset.tab;render();}
     else if(a==='new-project')projectModal();else if(a==='edit-project')projectModal(pid);else if(a==='delete-project'){let p=project(pid);if(p&&confirm(`Delete ${p.title} and its project file, all updates, quantities, and attachments from this device? Export a backup first.`)){let docs=await docsFor(pid);for(let d of docs)await delDoc(d.id);data.projects=data.projects.filter(x=>x.id!==pid);data.updates=data.updates.filter(x=>x.projectId!==pid);data.activities=data.activities.filter(x=>x.projectId!==pid);save();go('projects');}}
     else if(a==='new-update')updateModal(null,pid);else if(a==='edit-update')updateModal(pid);
     else if(a==='delete-update'){if(confirm('Delete this journal entry?')){data.updates=data.updates.filter(u=>u.id!==pid);save();render();}}
@@ -702,7 +718,7 @@
     modalClose();render();
   }catch(err){alert('Could not save: '+err.message);}});
   document.addEventListener('input',ev=>{if(ev.target.id==='projectSearch'){view.query=ev.target.value;document.getElementById('projectList').innerHTML=projectsList();}});
-  document.addEventListener('change',ev=>{let el=ev.target;if(el.id==='projectStatusFilter'){view.statusFilter=el.value;document.getElementById('projectList').innerHTML=projectsList();}else if(el.id==='updatesProjectFilter'){view.updatesFilter=el.value;render();}else if(el.id==='aiScope'){view.aiScope=el.value;render();}else if(el.id==='aiSeverity'){view.aiSeverity=el.value;render();}else if(el.id==='aiCategory'){view.aiCategory=el.value;render();}});
+  document.addEventListener('change',ev=>{let el=ev.target;if(el.id==='reportMonth'){if(reportValidMonth(el.value)){view.reportMonth=el.value;view.reportMode='live';render();}}else if(el.id==='reportMode'){view.reportMode=el.value;render();}else if(el.id==='projectStatusFilter'){view.statusFilter=el.value;document.getElementById('projectList').innerHTML=projectsList();}else if(el.id==='updatesProjectFilter'){view.updatesFilter=el.value;render();}else if(el.id==='aiScope'){view.aiScope=el.value;render();}else if(el.id==='aiSeverity'){view.aiSeverity=el.value;render();}else if(el.id==='aiCategory'){view.aiCategory=el.value;render();}});
   document.getElementById('csvFileInput').addEventListener('change',async ev=>{await importCsvFile(ev.target.files[0]);ev.target.value='';});
   document.getElementById('restoreInput').addEventListener('change',async ev=>{await backupRestore(ev.target.files[0]);ev.target.value='';});
   document.getElementById('documentInput').addEventListener('change',async ev=>{await documentPicked([...ev.target.files]);ev.target.value='';});

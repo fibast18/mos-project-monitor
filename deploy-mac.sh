@@ -10,9 +10,11 @@ if [[ "$(git branch --show-current)" != "main" ]]; then
   exit 1
 fi
 node --check sw.js
+node --check reports.js
 node scripts/validate-pages.mjs
+node scripts/test-monthly-reports.mjs
 # Stage only public website files, never private backups or credentials.
-git add -- index.html sw.js manifest.webmanifest apple-touch-icon.png icon-192.png icon-512.png CNAME scripts/validate-pages.mjs .github/workflows/deploy-pages.yml
+git add -- index.html reports.js sw.js manifest.webmanifest apple-touch-icon.png icon-192.png icon-512.png CNAME scripts/validate-pages.mjs scripts/test-monthly-reports.mjs .github/workflows/deploy-pages.yml
 if ! git diff --cached --quiet; then
   git commit -m "${1:-Update MOS Project Monitor website}"
 fi
